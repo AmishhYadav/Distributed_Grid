@@ -276,6 +276,34 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Historical Charts ──────────────────────────────────────────── */
+
+.chart-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.chart-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.chart-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 3rem 1rem;
+  font-size: 0.85rem;
+}
+
+.recharts-tooltip-wrapper {
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+}
+
 /* ── Node Cards ──────────────────────────────────────────────────── */
 
 .nodes-grid {

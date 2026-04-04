@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSimulation } from './hooks/useSimulation';
 import SimControls from './components/SimControls';
 import TopologyView from './components/TopologyView';
+import HistoryChart from './components/HistoryChart';
 import './App.css';
 
 function App() {
@@ -69,6 +70,8 @@ function App() {
         onNodeClick={(id) => setSelectedNodeId(prev => prev === id ? null : id)}
         selectedNodeId={selectedNodeId}
       />
+
+      <HistoryChart history={history} />
 
       <div className="nodes-grid">
         {data.nodes.map((node) => (
