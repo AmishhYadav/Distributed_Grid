@@ -11,9 +11,14 @@ Phase 3: Async-compatible loop with broadcast callback for WebSockets.
 from __future__ import annotations
 
 import asyncio
+import os
+import sys
 import time
 from datetime import datetime, timedelta
 from typing import Callable, Awaitable
+
+# Ensure sibling modules are importable regardless of working directory
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from generators import get_solar_generation, get_base_demand, apply_stochastic_shock
 from node import Node
@@ -149,8 +154,23 @@ class Engine:
 
         while True:
             if not self.running:
-                # Paused — send a paused snapshot and wait
-                await asyncio.sleep(0.1)
+                # Paused — send a paused snapshot so new clients get data
+                if on_tick:
+                    paused_snapshot = {
+                        "tick": self.tick_count,
+                        "time": self.current_time.isoformat(),
+                        "hour": round(self.current_time.hour + self.current_time.minute / 60.0, 2),
+                        "env_solar": 0.0,
+                        "env_demand": 0.0,
+                        "nodes": [n.history[-1] if n.history else {"id": n.id, "charge": n.charge, "capacity": n.battery_capacity, "soc": n.soc, "generation": 0, "demand": 0, "net": 0, "prediction": 0, "blackouts": 0, "train_count": 0, "has_model": False, "actual_delta": 0, "time": self.current_time.isoformat()} for n in self.nodes],
+                        "transactions": [],
+                        "ml_trained": [],
+                        "total_p2p_traded": round(self.router.total_energy_traded, 4),
+                        "paused": True,
+                        "speed": round(1.0 / self.tick_rate, 1),
+                    }
+                    await on_tick(paused_snapshot)
+                await asyncio.sleep(0.5)
                 continue
             snapshot = self.step()
 

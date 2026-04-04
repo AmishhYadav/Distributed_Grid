@@ -14,7 +14,7 @@ function SimControls({ paused, speed, onTogglePause, onSetSpeed, onCloudShock })
 
       <select
         className="speed-select"
-        value={speed}
+        value={Math.round(speed)}
         onChange={(e) => onSetSpeed(Number(e.target.value))}
         title="Simulation Speed"
       >
