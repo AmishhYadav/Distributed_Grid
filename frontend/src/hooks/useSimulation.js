@@ -54,6 +54,12 @@ export function useSimulation() {
     };
   }, []);
 
+  const sendCommand = useCallback((cmd, payload = {}) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ cmd, ...payload }));
+    }
+  }, []);
+
   useEffect(() => {
     connect();
     return () => {
@@ -64,5 +70,5 @@ export function useSimulation() {
     };
   }, [connect]);
 
-  return { data, isConnected, history };
+  return { data, isConnected, history, sendCommand };
 }

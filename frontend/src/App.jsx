@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { useSimulation } from './hooks/useSimulation';
+import SimControls from './components/SimControls';
 import './App.css';
 
 function App() {
-  const { data, isConnected } = useSimulation();
+  const { data, isConnected, history, sendCommand } = useSimulation();
+  const [selectedNodeId, setSelectedNodeId] = useState(null);
 
   if (!isConnected) {
     return (
@@ -27,8 +30,15 @@ function App() {
     <div className="app">
       <header className="header">
         <h1>⚡ Microgrid Simulation</h1>
+        <SimControls
+          paused={data.paused}
+          speed={data.speed || 1}
+          onTogglePause={() => sendCommand(data.paused ? 'resume' : 'pause')}
+          onSetSpeed={(mult) => sendCommand('set_speed', { multiplier: mult })}
+          onCloudShock={() => sendCommand('cloud_shock')}
+        />
         <div className="status">
-          <span className="dot connected"></span>
+          <span className={`dot ${data.paused ? 'paused' : 'connected'}`}></span>
           <span>Tick {data.tick} — {data.time}</span>
         </div>
       </header>
@@ -54,7 +64,12 @@ function App() {
 
       <div className="nodes-grid">
         {data.nodes.map((node) => (
-          <div key={node.id} className="node-card">
+          <div
+            key={node.id}
+            className={`node-card ${selectedNodeId === node.id ? 'selected' : ''}`}
+            onClick={() => setSelectedNodeId(prev => prev === node.id ? null : node.id)}
+            style={{ cursor: 'pointer' }}
+          >
             <div className="node-header">
               <span className="node-name">Node {node.id}</span>
               <span className={`soc-badge ${node.soc > 60 ? 'high' : node.soc > 25 ? 'mid' : 'low'}`}>
