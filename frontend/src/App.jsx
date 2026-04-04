@@ -3,6 +3,7 @@ import { useSimulation } from './hooks/useSimulation';
 import SimControls from './components/SimControls';
 import TopologyView from './components/TopologyView';
 import HistoryChart from './components/HistoryChart';
+import NodeDetailPanel from './components/NodeDetailPanel';
 import './App.css';
 
 function App() {
@@ -120,6 +121,14 @@ function App() {
         <div className="ml-event">
           🧠 ML retrained: {data.ml_trained.map(id => `N${id}`).join(', ')}
         </div>
+      )}
+
+      {selectedNodeId !== null && data.nodes.find(n => n.id === selectedNodeId) && (
+        <NodeDetailPanel
+          node={data.nodes.find(n => n.id === selectedNodeId)}
+          transactions={data.transactions || []}
+          onClose={() => setSelectedNodeId(null)}
+        />
       )}
     </div>
   );
