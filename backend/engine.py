@@ -41,6 +41,7 @@ class Engine:
         self.current_time = start_time or datetime(2026, 6, 1, 0, 0, 0)
         self.tick_count = 0
         self.running = False
+        self.force_cloud_shock = False
 
         # P2P Router
         self.router = P2PRouter()
@@ -71,6 +72,11 @@ class Engine:
         base_solar = get_solar_generation(hour)
         base_demand = get_base_demand(hour)
         solar, demand = apply_stochastic_shock(base_solar, base_demand)
+
+        # Force cloud shock from frontend control
+        if self.force_cloud_shock:
+            solar = solar * 0.1  # severe cloud event — 90% solar drop
+            self.force_cloud_shock = False
 
         # Update every node
         node_states = []
@@ -111,6 +117,8 @@ class Engine:
             "transactions": transactions,
             "ml_trained": ml_events,
             "total_p2p_traded": round(self.router.total_energy_traded, 4),
+            "paused": not self.running,
+            "speed": round(1.0 / self.tick_rate, 1),
         }
 
         # Advance logical clock
@@ -139,7 +147,11 @@ class Engine:
             f"| pace={self.tick_rate}s/tick\n"
         )
 
-        while self.running:
+        while True:
+            if not self.running:
+                # Paused — send a paused snapshot and wait
+                await asyncio.sleep(0.1)
+                continue
             snapshot = self.step()
 
             # Broadcast to connected clients

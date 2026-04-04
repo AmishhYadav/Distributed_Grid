@@ -4,9 +4,12 @@ Decentralized Energy Microgrid — FastAPI WebSocket Server
 Serves the simulation engine over WebSockets.
 Clients connect to ws://localhost:8000/ws/stream and receive
 full simulation snapshots every tick as JSON.
+Also accepts JSON commands for simulation control.
 """
 
 from __future__ import annotations
+
+import json
 
 import asyncio
 import sys
@@ -94,8 +97,21 @@ async def stream(ws: WebSocket):
     await manager.connect(ws)
     try:
         while True:
-            # Keep connection alive; client can also send commands later
-            await ws.receive_text()
+            raw = await ws.receive_text()
+            try:
+                data = json.loads(raw)
+                cmd = data.get("cmd")
+                if cmd == "pause":
+                    engine.running = False
+                elif cmd == "resume":
+                    engine.running = True
+                elif cmd == "set_speed":
+                    multiplier = float(data.get("multiplier", 1))
+                    engine.tick_rate = 1.0 / max(0.1, multiplier)
+                elif cmd == "cloud_shock":
+                    engine.force_cloud_shock = True
+            except (json.JSONDecodeError, ValueError) as e:
+                print(f"  ⚠ Invalid command: {e}")
     except WebSocketDisconnect:
         manager.disconnect(ws)
 
