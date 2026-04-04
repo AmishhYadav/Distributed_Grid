@@ -7,8 +7,11 @@ const CHART_UPDATE_INTERVAL = 3; // Only push to chart history every N ticks
 /**
  * Custom hook to manage the WebSocket connection to the simulation backend.
  *
- * Separates live tick data (updated every message) from chart history
- * (batched at a lower cadence) to avoid over-rendering Recharts.
+ * Key design decisions:
+ *  - `mountedRef` prevents the onclose handler from scheduling reconnects
+ *    after React StrictMode cleanup (which would create an infinite loop).
+ *  - Chart history is throttled to every CHART_UPDATE_INTERVAL ticks to
+ *    avoid re-rendering Recharts on every WebSocket message.
  */
 export function useSimulation() {
   const [data, setData] = useState(null);
@@ -16,12 +19,15 @@ export function useSimulation() {
   const [history, setHistory] = useState([]);
   const wsRef = useRef(null);
   const reconnectTimer = useRef(null);
+  const mountedRef = useRef(false);
   const pendingHistoryRef = useRef([]);
   const lastChartTick = useRef(0);
 
   const connect = useCallback(() => {
+    // Clean up any existing connection
     if (wsRef.current) {
       wsRef.current.close();
+      wsRef.current = null;
     }
 
     const ws = new WebSocket(WS_URL);
@@ -57,9 +63,16 @@ export function useSimulation() {
     };
 
     ws.onclose = () => {
-      console.log('📡 WebSocket disconnected — reconnecting...');
+      console.log('📡 WebSocket disconnected');
       setIsConnected(false);
-      reconnectTimer.current = setTimeout(connect, RECONNECT_DELAY);
+      // Only auto-reconnect if the component is still mounted.
+      // Without this guard, React StrictMode cleanup triggers onclose
+      // which schedules a reconnect that outlives the cleanup, creating
+      // an infinite connect → close → reconnect loop.
+      if (mountedRef.current) {
+        console.log('  ↻ Scheduling reconnect...');
+        reconnectTimer.current = setTimeout(connect, RECONNECT_DELAY);
+      }
     };
 
     ws.onerror = (err) => {
@@ -75,11 +88,15 @@ export function useSimulation() {
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     connect();
     return () => {
+      // Mark unmounted BEFORE closing so onclose won't schedule a reconnect
+      mountedRef.current = false;
       clearTimeout(reconnectTimer.current);
       if (wsRef.current) {
         wsRef.current.close();
+        wsRef.current = null;
       }
     };
   }, [connect]);
