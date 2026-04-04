@@ -2,10 +2,13 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 
 const WS_URL = 'ws://127.0.0.1:8000/ws/stream';
 const RECONNECT_DELAY = 2000;
+const CHART_UPDATE_INTERVAL = 3; // Only push to chart history every N ticks
 
 /**
  * Custom hook to manage the WebSocket connection to the simulation backend.
- * Returns the latest tick data and connection status.
+ *
+ * Separates live tick data (updated every message) from chart history
+ * (batched at a lower cadence) to avoid over-rendering Recharts.
  */
 export function useSimulation() {
   const [data, setData] = useState(null);
@@ -13,9 +16,10 @@ export function useSimulation() {
   const [history, setHistory] = useState([]);
   const wsRef = useRef(null);
   const reconnectTimer = useRef(null);
+  const pendingHistoryRef = useRef([]);
+  const lastChartTick = useRef(0);
 
   const connect = useCallback(() => {
-    // Clean up any existing connection
     if (wsRef.current) {
       wsRef.current.close();
     }
@@ -31,12 +35,22 @@ export function useSimulation() {
     ws.onmessage = (event) => {
       try {
         const snapshot = JSON.parse(event.data);
+
+        // Always update live data so metrics / nodes / topology stay current
         setData(snapshot);
-        setHistory((prev) => {
-          const next = [...prev, snapshot];
-          // Keep last 200 ticks in memory for charts
-          return next.length > 200 ? next.slice(-200) : next;
-        });
+
+        // Accumulate snapshots but only flush to chart state periodically
+        pendingHistoryRef.current.push(snapshot);
+
+        if (snapshot.tick - lastChartTick.current >= CHART_UPDATE_INTERVAL) {
+          lastChartTick.current = snapshot.tick;
+          const pending = pendingHistoryRef.current;
+          pendingHistoryRef.current = [];
+          setHistory((prev) => {
+            const next = [...prev, ...pending];
+            return next.length > 200 ? next.slice(-200) : next;
+          });
+        }
       } catch (e) {
         console.error('Failed to parse snapshot:', e);
       }

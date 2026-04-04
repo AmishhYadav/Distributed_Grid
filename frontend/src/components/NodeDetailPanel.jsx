@@ -1,6 +1,11 @@
 /**
  * NodeDetailPanel — Slide-out panel for per-node ML prediction & stats
+ *
+ * Wrapped in React.memo to avoid re-renders when unrelated
+ * parent state (e.g. chart history) changes.
  */
+import { memo } from 'react';
+
 function NodeDetailPanel({ node, transactions, onClose }) {
   if (!node) return null;
 
@@ -108,4 +113,4 @@ function NodeDetailPanel({ node, transactions, onClose }) {
   );
 }
 
-export default NodeDetailPanel;
+export default memo(NodeDetailPanel);

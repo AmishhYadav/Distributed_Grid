@@ -1,7 +1,11 @@
 /**
  * NegotiationLog — Terminal-style collapsible log console for P2P events
+ *
+ * Uses its own internal state (logs[]) and a prevTickRef guard so it
+ * only processes genuinely new ticks, not duplicate data snapshots.
+ * Wrapped in React.memo.
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 
 function NegotiationLog({ data }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -90,4 +94,4 @@ function NegotiationLog({ data }) {
   );
 }
 
-export default NegotiationLog;
+export default memo(NegotiationLog);

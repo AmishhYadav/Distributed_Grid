@@ -1,10 +1,34 @@
 /**
  * HistoryChart — Rolling area chart for Solar vs Demand using recharts
+ *
+ * Wrapped in React.memo so it only re-renders when `history` reference
+ * changes (throttled in useSimulation to every ~3 ticks).
+ * isAnimationActive={false} prevents Recharts from replaying the entrance
+ * animation on every data update.
  */
+import { memo, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
+const tooltipStyle = {
+  background: 'rgba(17,24,39,0.95)',
+  border: '1px solid #1e293b',
+  borderRadius: '8px',
+  backdropFilter: 'blur(8px)',
+  color: '#f1f5f9',
+  fontSize: '0.82rem',
+};
+
 function HistoryChart({ history }) {
-  if (!history || history.length < 2) {
+  const chartData = useMemo(() => {
+    if (!history || history.length < 2) return null;
+    return history.map((snap) => ({
+      tick: snap.tick,
+      solar: +(snap.env_solar * 100).toFixed(1),
+      demand: +(snap.env_demand * 100).toFixed(1),
+    }));
+  }, [history]);
+
+  if (!chartData) {
     return (
       <div className="chart-container">
         <h3 className="chart-title">📊 Solar vs Demand</h3>
@@ -12,12 +36,6 @@ function HistoryChart({ history }) {
       </div>
     );
   }
-
-  const chartData = history.map((snap) => ({
-    tick: snap.tick,
-    solar: +(snap.env_solar * 100).toFixed(1),
-    demand: +(snap.env_demand * 100).toFixed(1),
-  }));
 
   return (
     <div className="chart-container">
@@ -49,14 +67,7 @@ function HistoryChart({ history }) {
             tickFormatter={(v) => `${v}%`}
           />
           <Tooltip
-            contentStyle={{
-              background: 'rgba(17,24,39,0.95)',
-              border: '1px solid #1e293b',
-              borderRadius: '8px',
-              backdropFilter: 'blur(8px)',
-              color: '#f1f5f9',
-              fontSize: '0.82rem',
-            }}
+            contentStyle={tooltipStyle}
             labelFormatter={(tick) => `Tick ${tick}`}
           />
           <Area
@@ -67,6 +78,7 @@ function HistoryChart({ history }) {
             strokeWidth={2}
             name="Solar %"
             dot={false}
+            isAnimationActive={false}
           />
           <Area
             type="monotone"
@@ -76,6 +88,7 @@ function HistoryChart({ history }) {
             strokeWidth={2}
             name="Demand %"
             dot={false}
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -83,4 +96,4 @@ function HistoryChart({ history }) {
   );
 }
 
-export default HistoryChart;
+export default memo(HistoryChart);

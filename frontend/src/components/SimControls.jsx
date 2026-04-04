@@ -1,6 +1,11 @@
 /**
  * SimControls — Play/Pause, Speed selector, Cloud Shock button
+ *
+ * Wrapped in React.memo to avoid re-renders from parent when
+ * only unrelated state (e.g. tick counter) changes.
  */
+import { memo } from 'react';
+
 function SimControls({ paused, speed, onTogglePause, onSetSpeed, onCloudShock }) {
   return (
     <div className="sim-controls">
@@ -35,4 +40,4 @@ function SimControls({ paused, speed, onTogglePause, onSetSpeed, onCloudShock })
   );
 }
 
-export default SimControls;
+export default memo(SimControls);

@@ -1,6 +1,16 @@
 /**
  * TopologyView — Interactive SVG network topology with animated P2P flow lines
+ *
+ * Wrapped in React.memo to skip re-renders when props haven't changed.
  */
+import { memo } from 'react';
+
+const getSocColor = (soc) => {
+  if (soc > 60) return '#22c55e';
+  if (soc > 25) return '#eab308';
+  return '#ef4444';
+};
+
 function TopologyView({ nodes, transactions, onNodeClick, selectedNodeId }) {
   if (!nodes || nodes.length === 0) {
     return (
@@ -14,19 +24,13 @@ function TopologyView({ nodes, transactions, onNodeClick, selectedNodeId }) {
   const centerY = 200;
   const radius = 140;
 
-  const positions = nodes.map((node, i) => {
+  const positions = nodes.map((_, i) => {
     const angle = (2 * Math.PI * i) / nodes.length - Math.PI / 2;
     return {
       x: centerX + radius * Math.cos(angle),
       y: centerY + radius * Math.sin(angle),
     };
   });
-
-  const getSocColor = (soc) => {
-    if (soc > 60) return '#22c55e';
-    if (soc > 25) return '#eab308';
-    return '#ef4444';
-  };
 
   return (
     <div className="topology-view">
@@ -129,4 +133,4 @@ function TopologyView({ nodes, transactions, onNodeClick, selectedNodeId }) {
   );
 }
 
-export default TopologyView;
+export default memo(TopologyView);

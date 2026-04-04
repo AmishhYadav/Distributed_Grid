@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useSimulation } from './hooks/useSimulation';
 import SimControls from './components/SimControls';
 import TopologyView from './components/TopologyView';
@@ -11,6 +11,33 @@ function App() {
   const { data, isConnected, history, sendCommand } = useSimulation();
   const [selectedNodeId, setSelectedNodeId] = useState(null);
 
+  // ── Stable callbacks (won't change between renders) ────────────
+  const handleTogglePause = useCallback(() => {
+    // Read data.paused at call-time via the latest sendCommand closure
+    sendCommand('toggle_pause_hack');
+  }, [sendCommand]);
+
+  const handleSetSpeed = useCallback(
+    (mult) => sendCommand('set_speed', { multiplier: mult }),
+    [sendCommand],
+  );
+
+  const handleCloudShock = useCallback(
+    () => sendCommand('cloud_shock'),
+    [sendCommand],
+  );
+
+  const handleNodeClick = useCallback(
+    (id) => setSelectedNodeId((prev) => (prev === id ? null : id)),
+    [],
+  );
+
+  const handleCloseDetail = useCallback(
+    () => setSelectedNodeId(null),
+    [],
+  );
+
+  // ── Early returns ──────────────────────────────────────────────
   if (!isConnected) {
     return (
       <div className="connecting">
@@ -30,6 +57,13 @@ function App() {
     );
   }
 
+  // We need the toggle to know current paused state — override with
+  // a proper handler now that `data` is available.
+  const togglePause = () => sendCommand(data.paused ? 'resume' : 'pause');
+
+  const selectedNode = data.nodes.find((n) => n.id === selectedNodeId) || null;
+  const transactions = data.transactions || [];
+
   return (
     <div className="app">
       <header className="header">
@@ -37,9 +71,9 @@ function App() {
         <SimControls
           paused={data.paused}
           speed={data.speed || 1}
-          onTogglePause={() => sendCommand(data.paused ? 'resume' : 'pause')}
-          onSetSpeed={(mult) => sendCommand('set_speed', { multiplier: mult })}
-          onCloudShock={() => sendCommand('cloud_shock')}
+          onTogglePause={togglePause}
+          onSetSpeed={handleSetSpeed}
+          onCloudShock={handleCloudShock}
         />
         <div className="status">
           <span className={`dot ${data.paused ? 'paused' : 'connected'}`}></span>
@@ -62,14 +96,14 @@ function App() {
         </div>
         <div className="metric">
           <span className="label">Transactions</span>
-          <span className="value">{data.transactions?.length ?? 0}</span>
+          <span className="value">{transactions.length}</span>
         </div>
       </div>
 
       <TopologyView
         nodes={data.nodes}
-        transactions={data.transactions || []}
-        onNodeClick={(id) => setSelectedNodeId(prev => prev === id ? null : id)}
+        transactions={transactions}
+        onNodeClick={handleNodeClick}
         selectedNodeId={selectedNodeId}
       />
 
@@ -80,7 +114,7 @@ function App() {
           <div
             key={node.id}
             className={`node-card ${selectedNodeId === node.id ? 'selected' : ''}`}
-            onClick={() => setSelectedNodeId(prev => prev === node.id ? null : node.id)}
+            onClick={() => handleNodeClick(node.id)}
             style={{ cursor: 'pointer' }}
           >
             <div className="node-header">
@@ -109,11 +143,11 @@ function App() {
 
       <NegotiationLog data={data} />
 
-      {selectedNodeId !== null && data.nodes.find(n => n.id === selectedNodeId) && (
+      {selectedNode && (
         <NodeDetailPanel
-          node={data.nodes.find(n => n.id === selectedNodeId)}
-          transactions={data.transactions || []}
-          onClose={() => setSelectedNodeId(null)}
+          node={selectedNode}
+          transactions={transactions}
+          onClose={handleCloseDetail}
         />
       )}
     </div>
