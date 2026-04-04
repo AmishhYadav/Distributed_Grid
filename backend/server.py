@@ -125,3 +125,8 @@ async def health():
         "nodes": len(engine.nodes),
         "p2p_traded": round(engine.router.total_energy_traded, 2),
     }
+
+@app.get("/remote_log")
+async def remote_log(msg: str):
+    print(f"\n[BROWSER LOG]: {msg}\n")
+    return {"status": "ok"}

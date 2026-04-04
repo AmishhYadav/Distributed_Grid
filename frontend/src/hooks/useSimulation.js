@@ -1,51 +1,44 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const WS_URL = 'ws://127.0.0.1:8000/ws/stream';
-const RECONNECT_DELAY = 2000;
-const CHART_UPDATE_INTERVAL = 3; // Only push to chart history every N ticks
+const RECONNECT_DELAY = 1000;
+const CHART_UPDATE_INTERVAL = 3;
 
-/**
- * Custom hook to manage the WebSocket connection to the simulation backend.
- *
- * Key design decisions:
- *  - `mountedRef` prevents the onclose handler from scheduling reconnects
- *    after React StrictMode cleanup (which would create an infinite loop).
- *  - Chart history is throttled to every CHART_UPDATE_INTERVAL ticks to
- *    avoid re-rendering Recharts on every WebSocket message.
- */
+// Tiny logger to send browser errors/logs to our Python backend
+function remoteLog(msg) {
+  fetch('http://127.0.0.1:8000/remote_log?msg=' + encodeURIComponent(msg)).catch(() => {});
+}
+
 export function useSimulation() {
   const [data, setData] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [history, setHistory] = useState([]);
+  
   const wsRef = useRef(null);
   const reconnectTimer = useRef(null);
-  const mountedRef = useRef(false);
   const pendingHistoryRef = useRef([]);
   const lastChartTick = useRef(0);
 
   const connect = useCallback(() => {
-    // Clean up any existing connection
     if (wsRef.current) {
+      remoteLog('CLOSING_EXISTING_WS');
       wsRef.current.close();
       wsRef.current = null;
     }
 
+    remoteLog('CONNECTING_WS');
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('⚡ WebSocket connected');
+      remoteLog('WS_OPEN_SUCCESS');
       setIsConnected(true);
     };
 
     ws.onmessage = (event) => {
       try {
         const snapshot = JSON.parse(event.data);
-
-        // Always update live data so metrics / nodes / topology stay current
         setData(snapshot);
-
-        // Accumulate snapshots but only flush to chart state periodically
         pendingHistoryRef.current.push(snapshot);
 
         if (snapshot.tick - lastChartTick.current >= CHART_UPDATE_INTERVAL) {
@@ -58,26 +51,21 @@ export function useSimulation() {
           });
         }
       } catch (e) {
-        console.error('Failed to parse snapshot:', e);
+        remoteLog('WS_PARSE_ERROR: ' + e.message);
       }
     };
 
-    ws.onclose = () => {
-      console.log('📡 WebSocket disconnected');
-      setIsConnected(false);
-      // Only auto-reconnect if the component is still mounted.
-      // Without this guard, React StrictMode cleanup triggers onclose
-      // which schedules a reconnect that outlives the cleanup, creating
-      // an infinite connect → close → reconnect loop.
-      if (mountedRef.current) {
-        console.log('  ↻ Scheduling reconnect...');
-        reconnectTimer.current = setTimeout(connect, RECONNECT_DELAY);
+    ws.onclose = (e) => {
+      remoteLog(`WS_CLOSED (code: ${e.code}, reason: ${e.reason || 'none'}, wsRefMatch: ${wsRef.current === ws})`);
+      if (wsRef.current !== ws) {
+        return;
       }
+      setIsConnected(false);
+      reconnectTimer.current = setTimeout(connect, RECONNECT_DELAY);
     };
 
     ws.onerror = (err) => {
-      console.error('WebSocket error:', err);
-      ws.close();
+      remoteLog('WS_ERROR_EVENT');
     };
   }, []);
 
@@ -88,18 +76,30 @@ export function useSimulation() {
   }, []);
 
   useEffect(() => {
-    mountedRef.current = true;
+    remoteLog('HOOK_MOUNT');
     connect();
+    
     return () => {
-      // Mark unmounted BEFORE closing so onclose won't schedule a reconnect
-      mountedRef.current = false;
+      remoteLog('HOOK_UNMOUNT_CLEANUP');
       clearTimeout(reconnectTimer.current);
       if (wsRef.current) {
-        wsRef.current.close();
+        const socketToClose = wsRef.current;
         wsRef.current = null;
+        socketToClose.close();
       }
     };
   }, [connect]);
+
+  // Trap unhandled React/JS errors
+  useEffect(() => {
+    const handler = (e) => remoteLog('BROWSER_ERROR: ' + (e.message || e.reason));
+    window.addEventListener('error', handler);
+    window.addEventListener('unhandledrejection', handler);
+    return () => {
+      window.removeEventListener('error', handler);
+      window.removeEventListener('unhandledrejection', handler);
+    };
+  }, []);
 
   return { data, isConnected, history, sendCommand };
 }
