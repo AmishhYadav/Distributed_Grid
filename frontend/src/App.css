@@ -607,3 +607,99 @@ body {
   font-size: 0.85rem;
   margin-top: 1rem;
 }
+
+/* ── Negotiation Log Console ────────────────────────────────────── */
+
+.negotiation-log {
+  background: #050810;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  user-select: none;
+  transition: background 0.2s ease;
+}
+
+.log-header:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.log-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.log-entries {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0 1.25rem 0.75rem;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.log-entries::-webkit-scrollbar {
+  width: 4px;
+}
+
+.log-entries::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.log-entries::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.log-entry {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+  color: var(--text-muted);
+  animation: log-appear 0.2s ease-out;
+}
+
+@keyframes log-appear {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.log-tick {
+  color: var(--text-muted);
+  opacity: 0.6;
+  min-width: 48px;
+}
+
+.log-time {
+  color: var(--text-muted);
+  opacity: 0.5;
+  min-width: 40px;
+}
+
+.log-transfer .log-text { color: var(--accent-purple); }
+.log-ml .log-text { color: var(--accent-blue); }
+.log-bid .log-text { color: var(--accent-yellow); }
+.log-offer .log-text { color: var(--accent-green); }
+
+.log-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 1rem 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.negotiation-log.collapsed .log-entries {
+  display: none;
+}

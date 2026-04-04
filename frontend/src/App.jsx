@@ -4,6 +4,7 @@ import SimControls from './components/SimControls';
 import TopologyView from './components/TopologyView';
 import HistoryChart from './components/HistoryChart';
 import NodeDetailPanel from './components/NodeDetailPanel';
+import NegotiationLog from './components/NegotiationLog';
 import './App.css';
 
 function App() {
@@ -106,22 +107,7 @@ function App() {
         ))}
       </div>
 
-      {data.transactions && data.transactions.length > 0 && (
-        <div className="transactions">
-          <h3>⚡ P2P Transfers</h3>
-          {data.transactions.map((tx, i) => (
-            <div key={i} className="tx-line">
-              Node {tx.from} → Node {tx.to}: {tx.kWh.toFixed(3)} kWh
-            </div>
-          ))}
-        </div>
-      )}
-
-      {data.ml_trained && data.ml_trained.length > 0 && (
-        <div className="ml-event">
-          🧠 ML retrained: {data.ml_trained.map(id => `N${id}`).join(', ')}
-        </div>
-      )}
+      <NegotiationLog data={data} />
 
       {selectedNodeId !== null && data.nodes.find(n => n.id === selectedNodeId) && (
         <NodeDetailPanel
