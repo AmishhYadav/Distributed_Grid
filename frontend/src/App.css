@@ -193,6 +193,55 @@ body {
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
 }
 
+/* ── Topology View ──────────────────────────────────────────────── */
+
+.topology-view {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.topology-view svg {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+}
+
+.topology-view .flow-line {
+  animation: flow-dash 1.5s linear infinite;
+}
+
+@keyframes flow-dash {
+  to { stroke-dashoffset: -24; }
+}
+
+.topology-view circle {
+  transition: stroke 0.3s ease, fill 0.3s ease;
+}
+
+.topology-view circle:hover {
+  filter: brightness(1.2);
+}
+
+.topology-view .node-selected {
+  animation: node-ring-pulse 2s ease-in-out infinite;
+}
+
+@keyframes node-ring-pulse {
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: 0.5; }
+}
+
+.topology-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem;
+  font-size: 0.9rem;
+}
+
 
 /* ── Metrics Bar ─────────────────────────────────────────────────── */
 

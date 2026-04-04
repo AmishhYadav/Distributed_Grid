@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSimulation } from './hooks/useSimulation';
 import SimControls from './components/SimControls';
+import TopologyView from './components/TopologyView';
 import './App.css';
 
 function App() {
@@ -61,6 +62,13 @@ function App() {
           <span className="value">{data.transactions?.length ?? 0}</span>
         </div>
       </div>
+
+      <TopologyView
+        nodes={data.nodes}
+        transactions={data.transactions || []}
+        onNodeClick={(id) => setSelectedNodeId(prev => prev === id ? null : id)}
+        selectedNodeId={selectedNodeId}
+      />
 
       <div className="nodes-grid">
         {data.nodes.map((node) => (
