@@ -106,6 +106,8 @@ class Node:
             "actual_delta": round(actual_delta, 4),
             "prediction": round(self.latest_prediction, 4),
             "blackouts": self.blackout_ticks,
+            "train_count": self.train_count,
+            "has_model": self.model is not None,
         }
         self.history.append(state)
 
