@@ -1,19 +1,24 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { useSimulation } from './hooks/useSimulation';
+import LandingPage from './pages/LandingPage';
 import SimControls from './components/SimControls';
-import TopologyView from './components/TopologyView';
-import HistoryChart from './components/HistoryChart';
-import NodeDetailPanel from './components/NodeDetailPanel';
-import NegotiationLog from './components/NegotiationLog';
+import LocalityMap from './components/LocalityMap';
+import ChartsPanel from './components/ChartsPanel';
+import NodeInfoPanel from './components/NodeInfoPanel';
+import EventLog from './components/EventLog';
 import './App.css';
 
 function App() {
+  const [view, setView] = useState('landing');
   const { data, isConnected, history, sendCommand } = useSimulation();
   const [selectedNodeId, setSelectedNodeId] = useState(null);
 
-  // ── Stable callbacks (won't change between renders) ────────────
+  // ── Stable callbacks ───────────────────────────────────────────
+  const handleLaunch = useCallback(() => {
+    setView('simulation');
+  }, []);
+
   const handleTogglePause = useCallback(() => {
-    // Read data.paused at call-time via the latest sendCommand closure
     sendCommand('toggle_pause_hack');
   }, [sendCommand]);
 
@@ -37,119 +42,103 @@ function App() {
     [],
   );
 
-  // ── Early returns ──────────────────────────────────────────────
+  // ── View Routing ───────────────────────────────────────────────
+  
+  if (view === 'landing') {
+    return <LandingPage onLaunch={handleLaunch} />;
+  }
+
+  // Active Simulation View
+
   if (!isConnected) {
     return (
-      <div className="connecting">
-        <div className="pulse"></div>
-        <p>Connecting to simulation engine...</p>
-        <p className="hint">Make sure the backend is running: <code>uvicorn backend.server:app</code></p>
+      <div className="connecting-screen">
+        <div className="connecting-logo">Grid<span>Mind</span></div>
+        <div className="connecting-spinner"></div>
+        <div className="connecting-msg">Connecting to simulation engine...</div>
+        <div className="connecting-hint">Verify backend is running: <code>uvicorn backend.server:app</code></div>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="connecting">
-        <div className="pulse"></div>
-        <p>Waiting for first tick...</p>
+      <div className="connecting-screen">
+        <div className="connecting-logo">Grid<span>Mind</span></div>
+        <div className="connecting-spinner"></div>
+        <div className="connecting-msg">Awaiting first data tick...</div>
       </div>
     );
   }
 
-  // We need the toggle to know current paused state — override with
-  // a proper handler now that `data` is available.
   const togglePause = () => sendCommand(data.paused ? 'resume' : 'pause');
-
-  const selectedNode = data.nodes.find((n) => n.id === selectedNodeId) || null;
+  const selectedNode = data.nodes?.find((n) => n.id === selectedNodeId) || null;
   const transactions = data.transactions || [];
 
   return (
-    <div className="app">
-      <header className="header">
-        <h1>⚡ Microgrid Simulation</h1>
-        <SimControls
-          paused={data.paused}
-          speed={data.speed || 1}
-          onTogglePause={togglePause}
-          onSetSpeed={handleSetSpeed}
-          onCloudShock={handleCloudShock}
-        />
-        <div className="status">
-          <span className={`dot ${data.paused ? 'paused' : 'connected'}`}></span>
-          <span>Tick {data.tick} — {data.time}</span>
+    <div className="app-sim">
+      {/* ── Header ────────────────────────────────────────────── */}
+      <header className="sim-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+           <div className="sim-logo" onClick={() => setView('landing')} style={{cursor: 'pointer'}}>Grid<span>Mind</span></div>
+           <SimControls
+             paused={data.paused}
+             speed={data.speed || 1}
+             onTogglePause={togglePause}
+             onSetSpeed={handleSetSpeed}
+             onCloudShock={handleCloudShock}
+           />
+        </div>
+
+        <div className="sim-metrics">
+           <div className="sim-metric">
+              <span className="sim-metric-val">{(data.env_solar * 100).toFixed(1)}%</span>
+              <span className="sim-metric-lbl">Solar</span>
+           </div>
+           <div className="sim-metric">
+              <span className="sim-metric-val">{(data.env_demand * 100).toFixed(1)}%</span>
+              <span className="sim-metric-lbl">Demand</span>
+           </div>
+           <div className="sim-metric">
+              <span className="sim-metric-val">{data.total_p2p_traded?.toFixed(2) ?? '0.00'}</span>
+              <span className="sim-metric-lbl">kWh Traded</span>
+           </div>
+        </div>
+
+        <div className="sim-status">
+          <span className={`status-dot ${data.paused ? 'paused' : 'live'}`}></span>
+          <span>Tick {data.tick} • {data.time?.split('T')[1]?.slice(0, 5) || data.time}</span>
         </div>
       </header>
 
-      <div className="metrics-bar">
-        <div className="metric">
-          <span className="label">Solar</span>
-          <span className="value">{(data.env_solar * 100).toFixed(1)}%</span>
-        </div>
-        <div className="metric">
-          <span className="label">Demand</span>
-          <span className="value">{(data.env_demand * 100).toFixed(1)}%</span>
-        </div>
-        <div className="metric">
-          <span className="label">P2P Traded</span>
-          <span className="value">{data.total_p2p_traded?.toFixed(2) ?? '0.00'} kWh</span>
-        </div>
-        <div className="metric">
-          <span className="label">Transactions</span>
-          <span className="value">{transactions.length}</span>
-        </div>
-      </div>
-
-      <TopologyView
-        nodes={data.nodes}
-        transactions={transactions}
-        onNodeClick={handleNodeClick}
-        selectedNodeId={selectedNodeId}
-      />
-
-      <HistoryChart history={history} />
-
-      <div className="nodes-grid">
-        {data.nodes.map((node) => (
-          <div
-            key={node.id}
-            className={`node-card ${selectedNodeId === node.id ? 'selected' : ''}`}
-            onClick={() => handleNodeClick(node.id)}
-            style={{ cursor: 'pointer' }}
-          >
-            <div className="node-header">
-              <span className="node-name">Node {node.id}</span>
-              <span className={`soc-badge ${node.soc > 60 ? 'high' : node.soc > 25 ? 'mid' : 'low'}`}>
-                {node.soc.toFixed(0)}%
-              </span>
-            </div>
-            <div className="battery-bar">
-              <div
-                className="battery-fill"
-                style={{ width: `${Math.min(100, node.soc)}%` }}
-              ></div>
-            </div>
-            <div className="node-stats">
-              <span>☀ {node.generation.toFixed(2)} kW</span>
-              <span>⚡ {node.demand.toFixed(2)} kW</span>
-              <span>🔋 {node.charge.toFixed(1)}/{node.capacity} kWh</span>
-            </div>
-            {node.blackouts > 0 && (
-              <div className="blackout-warn">⚠ {node.blackouts} blackout(s)</div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <NegotiationLog data={data} />
-
-      {selectedNode && (
-        <NodeDetailPanel
-          node={selectedNode}
-          transactions={transactions}
-          onClose={handleCloseDetail}
+      {/* ── Main Body ──────────────────────────────────────────── */}
+      <div className="sim-body">
+        
+        {/* Left Panel: Node Info */}
+        <NodeInfoPanel 
+          node={selectedNode} 
+          transactions={transactions} 
+          onClose={handleCloseDetail} 
         />
-      )}
+
+        {/* Center Panel: Map & Event Log */}
+        <div className="sim-center">
+          <LocalityMap 
+            nodes={data.nodes} 
+            transactions={transactions} 
+            onNodeClick={handleNodeClick} 
+            selectedNodeId={selectedNodeId} 
+          />
+          <EventLog data={data} />
+        </div>
+
+        {/* Right Panel: Charts */}
+        <ChartsPanel 
+          history={history} 
+          selectedNode={selectedNode} 
+        />
+
+      </div>
     </div>
   );
 }

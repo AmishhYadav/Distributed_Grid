@@ -1,8 +1,5 @@
 /**
  * SimControls — Play/Pause, Speed selector, Cloud Shock button
- *
- * Wrapped in React.memo to avoid re-renders from parent when
- * only unrelated state (e.g. tick counter) changes.
  */
 import { memo } from 'react';
 
@@ -10,12 +7,14 @@ function SimControls({ paused, speed, onTogglePause, onSetSpeed, onCloudShock })
   return (
     <div className="sim-controls">
       <button
-        className={`control-btn play-btn ${!paused ? 'active' : ''}`}
+        className={`ctrl-btn ${!paused ? 'active' : ''}`}
         onClick={onTogglePause}
         title={paused ? 'Resume simulation' : 'Pause simulation'}
       >
         {paused ? '▶ Resume' : '⏸ Pause'}
       </button>
+
+      <div className="ctrl-divider"></div>
 
       <select
         className="speed-select"
@@ -29,12 +28,14 @@ function SimControls({ paused, speed, onTogglePause, onSetSpeed, onCloudShock })
         <option value={10}>10×</option>
       </select>
 
+      <div className="ctrl-divider"></div>
+
       <button
-        className="control-btn shock-btn"
+        className="ctrl-btn shock shock-btn pulsing"
         onClick={onCloudShock}
         title="Force a severe cloud event"
       >
-        ☁ Force Cloud Event
+        ⚡ Emergency
       </button>
     </div>
   );
