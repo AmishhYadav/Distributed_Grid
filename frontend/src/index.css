@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════
    AetherGrid — Global Styles & Design Tokens
-   Eco-modernist light palette with Manrope typography
+   "The Living Ledger" — Eco-modernist editorial dashboard
    ═══════════════════════════════════════════════════════════ */
 
 /* ── Reset ──────────────────────────────────────────────── */
@@ -11,7 +11,7 @@
 }
 
 :root {
-  /* ── Core palette (from Stitch design system) ── */
+  /* ── Core palette (Eco-Modernist Editorial) ── */
   --background: #f7f9fb;
   --surface: #f7f9fb;
   --surface-container: #eceef0;
@@ -24,51 +24,65 @@
   --surface-bright: #f7f9fb;
 
   --on-surface: #191c1e;
-  --on-surface-variant: #3d4a3e;
+  --on-surface-variant: #3f4940;
   --on-background: #191c1e;
 
-  --primary: #006d36;
-  --primary-container: #4ade80;
-  --primary-fixed: #6dfe9c;
-  --primary-fixed-dim: #4de082;
+  --primary: #005227;
+  --primary-container: #006d36;
+  --primary-fixed: #9bf6b1;
+  --primary-fixed-dim: #80da96;
   --on-primary: #ffffff;
-  --on-primary-container: #005e2d;
+  --on-primary-container: #91eca7;
   --on-primary-fixed: #00210c;
   --on-primary-fixed-variant: #005227;
 
-  --secondary: #00668a;
-  --secondary-container: #40c2fd;
-  --secondary-fixed: #c4e7ff;
-  --secondary-fixed-dim: #7bd0ff;
+  --secondary: #7c5800;
+  --secondary-container: #fdc65c;
+  --secondary-fixed: #ffdea7;
+  --secondary-fixed-dim: #f4be55;
   --on-secondary: #ffffff;
-  --on-secondary-container: #004d6a;
+  --on-secondary-container: #745200;
+  --on-secondary-fixed: #271900;
+  --on-secondary-fixed-variant: #5e4200;
 
-  --tertiary: #565e74;
-  --tertiary-container: #bcc4de;
+  --tertiary: #005227;
+  --tertiary-container: #006d36;
+  --tertiary-fixed: #9bf6b1;
+  --tertiary-fixed-dim: #80da96;
   --on-tertiary: #ffffff;
+  --on-tertiary-container: #91eca7;
 
   --error: #ba1a1a;
   --error-container: #ffdad6;
   --on-error: #ffffff;
   --on-error-container: #93000a;
 
-  --outline: #6d7b6d;
-  --outline-variant: #bccabb;
+  --outline: #6f7a6f;
+  --outline-variant: #becabd;
 
   --inverse-surface: #2d3133;
   --inverse-on-surface: #eff1f3;
-  --inverse-primary: #4de082;
+  --inverse-primary: #80da96;
+
+  /* ── Semantic sim colors ── */
+  --sim-emerald: #059669;
+  --sim-amber: #d97706;
+  --sim-error: #ba1a1a;
 
   /* ── Typography ── */
   --font-headline: 'Manrope', sans-serif;
-  --font-body: 'Manrope', sans-serif;
-  --font-label: 'Manrope', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-label: 'Inter', sans-serif;
 
-  /* ── Radii ── */
-  --radius-default: 1rem;
-  --radius-lg: 2rem;
-  --radius-xl: 3rem;
+  /* ── Radii (design spec) ── */
+  --radius-default: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1.5rem;
   --radius-full: 9999px;
+
+  /* ── Ambient shadow (primary-tinted) ── */
+  --shadow-ambient: 0px 24px 48px rgba(0, 82, 39, 0.06);
 }
 
 html {
@@ -88,7 +102,7 @@ body {
 
 /* ── Material Symbols ──────────────────────────────────── */
 .material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -104,12 +118,6 @@ body {
   background-clip: text;
 }
 
-/* ── Glass panels ──────────────────────────────────────── */
-.glass {
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-}
-
 /* ── Scrollbar ─────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -122,9 +130,9 @@ body {
   color: #005227;
 }
 
-/* ── Animations ────────────────────────────────────────── */
+/* ── Shared Animations ─────────────────────────────────── */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(30px); }
+  from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -138,94 +146,956 @@ body {
   to   { transform: rotate(360deg); }
 }
 
-/* ── Reveal sections ───────────────────────────────────── */
+@keyframes flow {
+  from { stroke-dashoffset: 16; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes ping {
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+
+/* ── Reveal sections (landing page) ────────────────────── */
 .reveal-section {
   opacity: 0;
   transform: translateY(30px);
   transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
               transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
 .reveal-section.active {
   opacity: 1;
   transform: translateY(0);
 }
 
-/* ── Hero-specific ─────────────────────────────────────── */
-.hero-sticky-container {
-  height: 300vh;
-}
-
+/* ── Hero-specific (landing page) ──────────────────────── */
+.hero-sticky-container { height: 300vh; }
 .sticky-wrapper {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: sticky; top: 0; height: 100vh;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+#hero-media-container { transition: all 0.1s linear; will-change: transform, width, height, border-radius; }
+#hero-title-left, #hero-title-right { transition: transform 0.1s linear; will-change: transform; }
+
+
+/* ══════════════════════════════════════════════════════════
+   SIMULATION DASHBOARD — "The Living Ledger"
+   ══════════════════════════════════════════════════════════ */
+
+.sim-root {
+  min-height: 100vh;
+  background: var(--surface);
   overflow: hidden;
 }
 
-#hero-media-container {
-  transition: all 0.1s linear;
-  will-change: transform, width, height, border-radius;
+/* ── Header / Top Nav ──────────────────────────────────── */
+.sim-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 1rem 2rem;
+  background: rgba(247, 249, 251, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-ambient);
+  font-family: var(--font-headline);
+  font-weight: 600;
+  color: #064e3b;
 }
 
-#hero-title-left, #hero-title-right {
-  transition: transform 0.1s linear;
-  will-change: transform;
+.sim-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
-/* ── Simulation Dashboard ──────────────────────────────── */
-.node-house {
-  cursor: pointer;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-              box-shadow 0.3s ease;
-}
-.node-house:hover {
-  transform: scale(1.08);
-  box-shadow: 0 0 30px rgba(77, 224, 130, 0.25);
-}
-.node-house.selected {
-  box-shadow: 0 0 0 3px var(--primary), 0 0 30px rgba(77, 224, 130, 0.3);
-}
-
-.energy-line {
-  stroke-dasharray: 8 4;
-  animation: dash-flow 1s linear infinite;
-}
-@keyframes dash-flow {
-  to { stroke-dashoffset: -12; }
-}
-
-.transfer-log-entry {
-  animation: fadeInUp 0.3s ease-out;
-}
-
-/* ── Simulation controls ───────────────────────────────── */
-.speed-btn {
-  padding: 0.25rem 0.75rem;
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
+.sim-logo {
+  font-size: 1.5rem;
   font-weight: 700;
-  transition: all 0.2s ease;
+  letter-spacing: -0.04em;
+  color: #064e3b;
   cursor: pointer;
+  user-select: none;
+}
+
+.sim-live-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: var(--radius-full);
+}
+
+.sim-live-dot {
+  position: relative;
+  display: flex;
+  width: 0.5rem;
+  height: 0.5rem;
+}
+
+.sim-live-ping {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #34d399;
+  opacity: 0.75;
+  animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.sim-live-core {
+  position: relative;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #059669;
+}
+
+.sim-live-text {
+  font-family: var(--font-label);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #064e3b;
+}
+
+.sim-header-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-left: 1rem;
+}
+
+.sim-header-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.sim-stat-label {
+  font-family: var(--font-label);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.sim-stat-value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: var(--font-body);
+}
+
+.sim-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sim-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(100, 116, 139, 0.08);
+  border-radius: var(--radius-xl);
+  padding: 0.25rem;
+}
+
+.sim-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
   border: none;
   background: transparent;
-  color: var(--on-surface-variant);
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+  color: #334155;
+  transition: background 0.15s;
 }
-.speed-btn:hover { background: var(--surface-container-high); }
-.speed-btn.active {
+.sim-icon-btn:hover {
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.sim-speed-btn {
+  padding: 0.25rem 0.75rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  transition: all 0.15s;
+}
+.sim-speed-btn:hover { color: #059669; }
+.sim-speed-btn.active {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+.sim-utility-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.sim-cloud-shock-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
   background: var(--primary);
+  color: var(--on-primary);
+  border: none;
+  border-radius: var(--radius-xl);
+  font-family: var(--font-label);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.sim-cloud-shock-btn:hover { opacity: 0.9; }
+
+/* ── Main 3-Column Layout ──────────────────────────────── */
+.sim-main {
+  display: grid;
+  grid-template-columns: 320px 1fr 380px;
+  gap: 0;
+  height: calc(100vh - 76px);
+}
+
+/* ── LEFT PANEL: Transfer Log ──────────────────────────── */
+.sim-panel-left {
+  background: var(--surface-container-low);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-right: 1px solid rgba(190, 202, 189, 0.1);
+}
+
+.sim-log-header {
+  padding: 1.5rem;
+}
+
+.sim-log-title {
+  font-family: var(--font-headline);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.125rem;
+}
+
+.sim-log-subtitle {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.sim-log-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 2rem;
+}
+
+.sim-log-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1rem;
+  color: #94a3b8;
+  font-size: 0.8125rem;
+  gap: 0.5rem;
+}
+
+.sim-log-empty-icon {
+  font-size: 2.5rem;
+  opacity: 0.3;
+}
+
+/* ── Transaction Card ── */
+.sim-tx-card {
+  padding: 1rem;
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border: 1px solid transparent;
+  transition: border-color 0.2s;
+  animation: fadeInUp 0.3s ease-out;
+}
+.sim-tx-card:hover {
+  border-color: rgba(0, 82, 39, 0.1);
+}
+
+.sim-tx-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.sim-tx-id {
+  font-family: var(--font-label);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.sim-tx-badge {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+}
+.sim-tx-badge.p2p {
+  color: #059669;
+  background: rgba(16, 185, 129, 0.08);
+}
+.sim-tx-badge.ml {
+  color: var(--secondary);
+  background: rgba(253, 198, 92, 0.2);
+}
+
+.sim-tx-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sim-tx-nodes {
+  display: flex;
+  flex-direction: column;
+}
+
+.sim-tx-node-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sim-tx-arrow {
+  font-size: 0.625rem;
+  color: #cbd5e1;
+}
+
+.sim-tx-amount {
+  text-align: right;
+}
+
+.sim-tx-kwh {
+  font-family: var(--font-headline);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--primary);
+  display: block;
+}
+.sim-tx-kwh.ml { color: var(--secondary); }
+
+.sim-tx-status {
+  font-size: 0.5625rem;
+  color: #94a3b8;
+}
+
+/* ── Log Footer ── */
+.sim-log-footer {
+  padding: 2rem;
+  background: var(--surface-container-high);
+  border-top: 1px solid rgba(190, 202, 189, 0.1);
+}
+
+.sim-footer-label {
+  font-family: var(--font-label);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-bottom: 0.375rem;
+}
+
+.sim-footer-value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.sim-footer-number {
+  font-family: var(--font-headline);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+}
+
+.sim-footer-unit {
+  font-family: var(--font-headline);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #047857;
+}
+
+.sim-footer-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+/* ── CENTER PANEL: Neighborhood Map ────────────────────── */
+.sim-panel-center {
+  position: relative;
+  background: var(--surface);
+  padding: 2rem;
+  overflow: hidden;
+}
+
+.sim-map-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.sim-map-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1);
+}
+
+.sim-map-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Central Hub ── */
+.sim-hub {
+  position: relative;
+  z-index: 20;
+}
+
+.sim-hub-circle {
+  width: 8rem;
+  height: 8rem;
+  background: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 40px rgba(0, 82, 39, 0.25);
+}
+
+.sim-hub-icon {
+  color: white;
+  font-size: 3rem;
+}
+
+.sim-hub-label {
+  position: absolute;
+  bottom: -2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.sim-hub-label span {
+  font-family: var(--font-headline);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  background: white;
+  padding: 0.25rem 1rem;
+  border-radius: var(--radius-full);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f1f5f9;
+}
+
+/* ── SVG Flow Lines ── */
+.sim-flow-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.flow-line {
+  stroke-dasharray: 8;
+  animation: flow 2s linear infinite;
+}
+
+/* ── House Nodes ── */
+.sim-node {
+  z-index: 30;
+  cursor: pointer;
+}
+
+.sim-node-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sim-node-card {
+  position: relative;
+  width: 4rem;
+  height: 4rem;
+  background: white;
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 2px solid rgba(5, 150, 105, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sim-node:hover .sim-node-card {
+  transform: scale(1.1);
+}
+
+.sim-node.selected .sim-node-card {
+  box-shadow: 0 0 0 3px var(--primary), 0 4px 20px rgba(0, 82, 39, 0.2);
+}
+
+.node-border-surplus { border-color: rgba(5, 150, 105, 0.5); }
+.node-border-balanced { border-color: rgba(253, 198, 92, 0.5); }
+.node-border-critical { border-color: rgba(186, 26, 26, 0.5); }
+
+.sim-node-icon {
+  color: #064e3b;
+  font-size: 1.5rem;
+}
+
+/* Vertical battery gauge */
+.sim-node-battery {
+  position: absolute;
+  right: -0.5rem;
+  top: 0.5rem;
+  height: 2.5rem;
+  width: 0.5rem;
+  background: #f1f5f9;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.sim-node-battery-fill {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  border-radius: var(--radius-full);
+  transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.sim-node-name {
+  margin-top: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-lg);
+}
+
+.sim-node-net {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  margin-top: 0.125rem;
+}
+.net-positive { color: #059669; }
+.net-negative { color: var(--secondary); }
+
+/* ── Environmental Indicators ── */
+.sim-env-row {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 2.5rem;
+  display: flex;
+  gap: 1rem;
+  z-index: 30;
+}
+
+.sim-env-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.sim-env-icon {
+  display: flex;
+  padding: 0.5rem;
+  border-radius: var(--radius-xl);
+}
+.sim-env-icon.amber {
+  background: rgba(253, 198, 92, 0.15);
+  color: var(--secondary);
+}
+.sim-env-icon.green {
+  background: rgba(0, 82, 39, 0.08);
+  color: var(--primary);
+}
+
+.sim-env-label {
+  font-family: var(--font-label);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.sim-env-value {
+  font-family: var(--font-headline);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* ── RIGHT PANEL: Overview / Detail ────────────────────── */
+.sim-panel-right {
+  background: var(--surface-container-low);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  border-left: 1px solid rgba(190, 202, 189, 0.1);
+}
+
+.sim-detail-scroll {
+  padding: 2rem;
+}
+
+.sim-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.sim-detail-title {
+  font-family: var(--font-headline);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -0.01em;
+}
+
+.sim-detail-subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.125rem;
+}
+
+.sim-status-pill {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-family: var(--font-label);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.sim-status-pill.stable { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.sim-status-pill.warning { background: rgba(253, 198, 92, 0.2); color: #92400e; }
+.sim-status-pill.critical { background: rgba(186, 26, 26, 0.1); color: #991b1b; }
+.sim-status-pill.waiting { background: #e2e8f0; color: #64748b; }
+.sim-status-pill.surplus { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.sim-status-pill.balanced { background: rgba(253, 198, 92, 0.2); color: #92400e; }
+
+/* ── Circular Battery Gauge ── */
+.sim-gauge-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+
+.sim-gauge-ring {
+  position: relative;
+  width: 14rem;
+  height: 14rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sim-gauge-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.sim-gauge-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.sim-gauge-icon {
+  color: var(--primary);
+  font-size: 1.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.sim-gauge-percent {
+  font-family: var(--font-headline);
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.sim-gauge-pct {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.sim-gauge-label {
+  font-family: var(--font-label);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-top: 0.375rem;
+}
+
+/* ── Performance Metrics ── */
+.sim-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.sim-metric-card {
+  padding: 1.25rem;
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.sim-metric-icon {
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+}
+.sim-metric-icon.amber { color: var(--secondary); }
+.sim-metric-icon.green { color: #059669; }
+
+.sim-metric-label {
+  font-family: var(--font-label);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.sim-metric-value {
+  font-family: var(--font-headline);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 0.125rem;
+}
+
+/* ── ML Prediction Card ── */
+.sim-ml-card {
+  background: var(--primary);
+  border-radius: var(--radius-2xl);
+  color: var(--on-primary);
+  box-shadow: 0 8px 24px rgba(0, 82, 39, 0.2);
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.sim-ml-bg {
+  position: absolute;
+  right: -1rem;
+  bottom: -1rem;
+  opacity: 0.15;
+}
+.sim-ml-bg .material-symbols-outlined {
+  font-size: 6rem;
   color: white;
 }
 
-/* ── Battery gauge ─────────────────────────────────────── */
+.sim-ml-content {
+  position: relative;
+  z-index: 1;
+  padding: 1.5rem;
+}
+
+.sim-ml-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.sim-ml-label {
+  font-family: var(--font-label);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.8;
+}
+
+.sim-ml-text {
+  font-family: var(--font-headline);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.sim-ml-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.sim-ml-action {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.625rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
+}
+
+.sim-ml-conf {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ── Historical Performance ── */
+.sim-history-label {
+  font-family: var(--font-label);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-bottom: 1rem;
+}
+
+.sim-history-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.sim-history-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  background: var(--surface-container-high);
+  border-radius: var(--radius-xl);
+}
+
+.sim-history-value {
+  font-family: var(--font-headline);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.sim-history-value.optimal {
+  font-size: 0.75rem;
+  color: #059669;
+}
+
+.sim-history-key {
+  font-family: var(--font-label);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-top: 0.125rem;
+}
+
+/* ── Back to Overview ── */
+.sim-back-overview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(190, 202, 189, 0.2);
+  background: transparent;
+  border-radius: var(--radius-xl);
+  font-family: var(--font-label);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sim-back-overview:hover {
+  background: rgba(0, 82, 39, 0.04);
+}
+
+/* ── Battery fill transition ── */
 .battery-fill {
   transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .sim-main {
+    grid-template-columns: 280px 1fr 300px;
+  }
+  .sim-header-stats { display: none; }
+}
+
 @media (max-width: 768px) {
   .hero-sticky-container { height: 200vh; }
+  .sim-main {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    height: auto;
+  }
+  .sim-panel-left, .sim-panel-right {
+    height: auto;
+    max-height: 50vh;
+    border: none;
+  }
+  .sim-panel-center {
+    height: 60vh;
+  }
+  .sim-env-row {
+    flex-direction: column;
+    bottom: 1rem;
+    left: 1rem;
+    gap: 0.5rem;
+  }
+  .sim-utility-icons { display: none; }
 }
