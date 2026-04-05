@@ -258,16 +258,9 @@ function LocalityMap({ nodes, transactions, selectedNodeId, onNodeClick }) {
   }
 
   return (
-    <div className="locality-map-wrap">
-      <div className="map-label">Residential Locality</div>
-
-      <svg viewBox="0 0 800 520" preserveAspectRatio="xMidYMid meet">
+    <>
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 800 520" preserveAspectRatio="xMidYMid meet">
         <defs>
-          {/* Subtle grid/terrain background pattern */}
-          <pattern id="mapGrid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.025)" strokeWidth="0.5" />
-          </pattern>
-
           <style>{`
             @keyframes idleGlow {
               0%, 100% { opacity: 0; r: 20; }
@@ -284,15 +277,9 @@ function LocalityMap({ nodes, transactions, selectedNodeId, onNodeClick }) {
               0%, 100% { opacity: 1; }
               50%       { opacity: 0.3; }
             }
+            .pointer-events-auto { pointer-events: auto; }
           `}</style>
         </defs>
-
-        {/* Background terrain */}
-        <rect width="800" height="520" fill="url(#mapGrid)" opacity={0.6} />
-
-        {/* Street/road implied lines (decorative) */}
-        <path d="M 0 400 Q 400 380 800 420" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth={20} />
-        <path d="M 220 80 L 220 520"         fill="none" stroke="rgba(255,255,255,0.025)" strokeWidth={12} />
 
         {/* Grid node and its connections (rendered first / behind houses) */}
         <GridNode pos={GRID_POS} active={nodes.some(n => n.soc < 15)} />
@@ -301,44 +288,26 @@ function LocalityMap({ nodes, transactions, selectedNodeId, onNodeClick }) {
         {/* Energy links (P2P, behind house nodes) */}
         {links}
 
-        {/* House nodes */}
-        {nodes.map((node) => {
-          const pos = getPos(node.id);
-          return (
-            <HouseNode
-              key={`house-${node.id}`}
-              node={node}
-              pos={pos}
-              isSelected={selectedNodeId === node.id}
-              isHovered={hoveredId === node.id}
-              onNodeClick={onNodeClick}
-              onHover={handleHover}
-              onHoverEnd={handleHoverEnd}
-            />
-          );
-        })}
+        {/* House nodes (need pointer-events to receive clicks) */}
+        <g className="pointer-events-auto">
+          {nodes.map((node) => {
+            const pos = getPos(node.id);
+            return (
+              <HouseNode
+                key={`house-${node.id}`}
+                node={node}
+                pos={pos}
+                isSelected={selectedNodeId === node.id}
+                isHovered={hoveredId === node.id}
+                onNodeClick={onNodeClick}
+                onHover={handleHover}
+                onHoverEnd={handleHoverEnd}
+              />
+            );
+          })}
+        </g>
       </svg>
-
-      {/* Legend */}
-      <div className="map-legend">
-        <div className="legend-item">
-          <div className="legend-dot" style={{ background: '#00e87a' }} />
-          P2P Share
-        </div>
-        <div className="legend-item">
-          <div className="legend-dot" style={{ background: '#00d4ff' }} />
-          Grid Supply
-        </div>
-        <div className="legend-item">
-          <div className="legend-dot" style={{ background: '#ffcc00' }} />
-          Low Battery
-        </div>
-        <div className="legend-item">
-          <div className="legend-dot" style={{ background: '#ff3b6b' }} />
-          Critical
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
 
