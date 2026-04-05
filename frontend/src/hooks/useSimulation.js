@@ -1,105 +1,98 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react'
 
-const WS_URL = 'ws://127.0.0.1:8000/ws/stream';
-const RECONNECT_DELAY = 1000;
-const CHART_UPDATE_INTERVAL = 3;
-
-// Tiny logger to send browser errors/logs to our Python backend
-function remoteLog(msg) {
-  fetch('http://127.0.0.1:8000/remote_log?msg=' + encodeURIComponent(msg)).catch(() => {});
-}
-
-export function useSimulation() {
-  const [data, setData] = useState(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [history, setHistory] = useState([]);
-  
-  const wsRef = useRef(null);
-  const reconnectTimer = useRef(null);
-  const pendingHistoryRef = useRef([]);
-  const lastChartTick = useRef(0);
+/**
+ * useSimulation — connects to ws://localhost:8000/ws/stream
+ * Returns live snapshot data & control functions.
+ */
+export default function useSimulation() {
+  const [snapshot, setSnapshot] = useState(null)
+  const [connected, setConnected] = useState(false)
+  const [transactions, setTransactions] = useState([])
+  const wsRef = useRef(null)
+  const reconnectTimer = useRef(null)
 
   const connect = useCallback(() => {
-    if (wsRef.current) {
-      remoteLog('CLOSING_EXISTING_WS');
-      wsRef.current.close();
-      wsRef.current = null;
-    }
+    if (wsRef.current?.readyState === WebSocket.OPEN) return
 
-    remoteLog('CONNECTING_WS');
-    const ws = new WebSocket(WS_URL);
-    wsRef.current = ws;
+    const ws = new WebSocket('ws://localhost:8000/ws/stream')
+    wsRef.current = ws
 
     ws.onopen = () => {
-      remoteLog('WS_OPEN_SUCCESS');
-      setIsConnected(true);
-    };
+      console.log('⚡ WebSocket connected')
+      setConnected(true)
+    }
 
     ws.onmessage = (event) => {
       try {
-        const snapshot = JSON.parse(event.data);
-        setData(snapshot);
-        pendingHistoryRef.current.push(snapshot);
+        const data = JSON.parse(event.data)
+        setSnapshot(data)
 
-        if (snapshot.tick - lastChartTick.current >= CHART_UPDATE_INTERVAL) {
-          lastChartTick.current = snapshot.tick;
-          const pending = pendingHistoryRef.current;
-          pendingHistoryRef.current = [];
-          setHistory((prev) => {
-            const next = [...prev, ...pending];
-            return next.length > 200 ? next.slice(-200) : next;
-          });
+        // Accumulate transaction log (keep last 50)
+        if (data.transactions && data.transactions.length > 0) {
+          setTransactions((prev) => {
+            const withTick = data.transactions.map((tx) => ({
+              ...tx,
+              tick: data.tick,
+              time: data.time,
+            }))
+            return [...withTick, ...prev].slice(0, 50)
+          })
+        }
+
+        // Add ML training events to log
+        if (data.ml_trained && data.ml_trained.length > 0) {
+          setTransactions((prev) => {
+            const events = data.ml_trained.map((nodeId) => ({
+              type: 'ml_train',
+              nodeId,
+              tick: data.tick,
+              time: data.time,
+            }))
+            return [...events, ...prev].slice(0, 50)
+          })
         }
       } catch (e) {
-        remoteLog('WS_PARSE_ERROR: ' + e.message);
+        console.warn('Failed to parse WS message', e)
       }
-    };
-
-    ws.onclose = (e) => {
-      remoteLog(`WS_CLOSED (code: ${e.code}, reason: ${e.reason || 'none'}, wsRefMatch: ${wsRef.current === ws})`);
-      if (wsRef.current !== ws) {
-        return;
-      }
-      setIsConnected(false);
-      reconnectTimer.current = setTimeout(connect, RECONNECT_DELAY);
-    };
-
-    ws.onerror = (err) => {
-      remoteLog('WS_ERROR_EVENT');
-    };
-  }, []);
-
-  const sendCommand = useCallback((cmd, payload = {}) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ cmd, ...payload }));
     }
-  }, []);
+
+    ws.onclose = () => {
+      console.log('📡 WebSocket disconnected, retrying...')
+      setConnected(false)
+      reconnectTimer.current = setTimeout(connect, 2000)
+    }
+
+    ws.onerror = () => {
+      ws.close()
+    }
+  }, [])
 
   useEffect(() => {
-    remoteLog('HOOK_MOUNT');
-    connect();
-    
+    connect()
     return () => {
-      remoteLog('HOOK_UNMOUNT_CLEANUP');
-      clearTimeout(reconnectTimer.current);
-      if (wsRef.current) {
-        const socketToClose = wsRef.current;
-        wsRef.current = null;
-        socketToClose.close();
-      }
-    };
-  }, [connect]);
+      clearTimeout(reconnectTimer.current)
+      wsRef.current?.close()
+    }
+  }, [connect])
 
-  // Trap unhandled React/JS errors
-  useEffect(() => {
-    const handler = (e) => remoteLog('BROWSER_ERROR: ' + (e.message || e.reason));
-    window.addEventListener('error', handler);
-    window.addEventListener('unhandledrejection', handler);
-    return () => {
-      window.removeEventListener('error', handler);
-      window.removeEventListener('unhandledrejection', handler);
-    };
-  }, []);
+  const sendCommand = useCallback((cmd) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(cmd))
+    }
+  }, [])
 
-  return { data, isConnected, history, sendCommand };
+  const pause = useCallback(() => sendCommand({ cmd: 'pause' }), [sendCommand])
+  const resume = useCallback(() => sendCommand({ cmd: 'resume' }), [sendCommand])
+  const setSpeed = useCallback((multiplier) => sendCommand({ cmd: 'set_speed', multiplier }), [sendCommand])
+  const cloudShock = useCallback(() => sendCommand({ cmd: 'cloud_shock' }), [sendCommand])
+
+  return {
+    snapshot,
+    connected,
+    transactions,
+    pause,
+    resume,
+    setSpeed,
+    cloudShock,
+  }
 }

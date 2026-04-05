@@ -1,313 +1,514 @@
-import { useEffect } from 'react';
-import './LandingPage.css';
+import { useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-export default function LandingPage({ onLaunch }) {
+/* ═══════════════════════════════════════════════════════════
+   AetherGrid Landing Page — Pixel-perfect Stitch recreation
+   Scroll-expanding hero + storytelling reveal sections
+   ═══════════════════════════════════════════════════════════ */
+
+export default function LandingPage() {
+  const navigate = useNavigate()
+
+  // Refs for the scroll-expansion hero
+  const mediaRef = useRef(null)
+  const innerContentRef = useRef(null)
+  const titleLeftRef = useRef(null)
+  const titleRightRef = useRef(null)
+  const heroImgRef = useRef(null)
 
   useEffect(() => {
-    const mediaContainer = document.getElementById('hero-media-container');
-    const heroInnerContent = document.getElementById('hero-inner-content');
-    const titleLeft = document.getElementById('hero-title-left');
-    const titleRight = document.getElementById('hero-title-right');
-    const heroImg = document.getElementById('hero-img');
-
+    // ── 1. Hero scroll-expansion logic ────────────────────
     const handleScroll = () => {
-      const scrollPos = window.scrollY;
-      const windowHeight = window.innerHeight;
-      const windowWidth = window.innerWidth;
-      const scrollRange = windowHeight * 1.5;
+      const scrollPos = window.scrollY
+      const windowHeight = window.innerHeight
+      const scrollRange = windowHeight * 1.5
 
-      let progress = Math.min(scrollPos / scrollRange, 1);
+      let progress = Math.min(scrollPos / scrollRange, 1)
 
-      if (mediaContainer) {
-        const startSize = Math.min(windowWidth * 0.7, 900);
-        const currentWidth = startSize + (progress * (windowWidth - startSize));
-        const currentHeight = startSize + (progress * (windowHeight - startSize));
-        const currentRadius = progress > 0.8 ? 0 : (1 - progress) * 50;
+      const media = mediaRef.current
+      const inner = innerContentRef.current
+      const left = titleLeftRef.current
+      const right = titleRightRef.current
+      const img = heroImgRef.current
 
-        mediaContainer.style.width = `${currentWidth}px`;
-        mediaContainer.style.height = `${currentHeight}px`;
-        mediaContainer.style.borderRadius = `${currentRadius}%`;
-        mediaContainer.style.maxWidth = 'none';
-        mediaContainer.style.maxHeight = 'none';
+      if (!media || !inner || !left || !right || !img) return
+
+      // Container expansion
+      const currentWidth = 40 + progress * 60
+      const currentHeight = 60 + progress * 40
+      const currentRadius = progress > 0.8 ? 0 : (1 - progress) * 100
+
+      media.style.width = `${currentWidth}vw`
+      media.style.height = `${currentHeight}vh`
+      media.style.borderRadius = `${currentRadius}%`
+
+      // Image parallax
+      img.style.transform = `scale(${1.1 - progress * 0.1})`
+
+      // Text split
+      const splitOffset = progress * 100
+      left.style.transform = `translateX(-${splitOffset}vw)`
+      right.style.transform = `translateX(${splitOffset}vw)`
+
+      // Inner content fade
+      if (progress > 0.5) {
+        const cp = (progress - 0.5) * 2
+        inner.style.opacity = cp
+        inner.style.pointerEvents = 'auto'
+        inner.style.transform = `translateY(${(1 - cp) * 20}px)`
+      } else {
+        inner.style.opacity = 0
+        inner.style.pointerEvents = 'none'
       }
 
-      if (heroImg) {
-        heroImg.style.transform = `scale(${1.1 - (progress * 0.1)})`;
+      // Hide title when fully split
+      const titleWrap = left.parentElement
+      if (titleWrap) {
+        titleWrap.style.opacity = progress > 0.95 ? 0 : 1 - progress
       }
+    }
 
-      const splitOffset = progress * 100;
-      if (titleLeft) titleLeft.style.transform = `translateX(-${splitOffset}vw)`;
-      if (titleRight) titleRight.style.transform = `translateX(${splitOffset}vw)`;
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll() // init
 
-      if (heroInnerContent) {
-        if (progress > 0.5) {
-          const contentProgress = (progress - 0.5) * 2;
-          heroInnerContent.style.opacity = contentProgress;
-          heroInnerContent.style.pointerEvents = 'auto';
-          heroInnerContent.style.transform = `translateY(${(1 - contentProgress) * 20}px)`;
-        } else {
-          heroInnerContent.style.opacity = 0;
-          heroInnerContent.style.pointerEvents = 'none';
-        }
-      }
-
-      if (titleLeft && titleLeft.parentElement) {
-        if (progress > 0.95) {
-          titleLeft.parentElement.style.opacity = 0;
-        } else {
-          titleLeft.parentElement.style.opacity = 1 - progress;
-        }
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    window.addEventListener('resize', handleScroll);
-    handleScroll();
-
+    // ── 2. Intersection observer for reveal sections ──────
     const observerOptions = {
       threshold: 0.15,
-      rootMargin: '0px 0px -50px 0px'
-    };
+      rootMargin: '0px 0px -50px 0px',
+    }
 
-    const sectionObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          entry.target.classList.add('active');
+          entry.target.classList.add('active')
         }
-      });
-    }, observerOptions);
+      })
+    }, observerOptions)
 
-    document.querySelectorAll('.reveal-section').forEach(section => {
-      sectionObserver.observe(section);
-    });
+    document.querySelectorAll('.reveal-section').forEach((s) => observer.observe(s))
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleScroll);
-      sectionObserver.disconnect();
-    };
-  }, []);
+      window.removeEventListener('scroll', handleScroll)
+      observer.disconnect()
+    }
+  }, [])
 
   return (
-    <div className="aethergrid-landing text-[#191c1e]">
-
-      {/* Top Navigation */}
-      <nav className="fixed top-0 w-full z-[100] bg-white/80 backdrop-blur-3xl shadow-sm">
-        <div className="flex justify-between items-center px-8 py-4 max-w-screen-2xl mx-auto">
-          <div className="text-2xl font-bold tracking-tighter text-zinc-900">AetherGrid</div>
-          <div className="hidden md:flex gap-8 items-center">
-            <a className="text-emerald-700 font-semibold border-b-2 border-emerald-500 pb-1 tracking-tight" href="#">Grid Intelligence</a>
-            <a className="text-zinc-600 hover:text-emerald-600 transition-colors tracking-tight font-medium" href="#">Solar Yield</a>
-            <a className="text-zinc-600 hover:text-emerald-600 transition-colors tracking-tight font-medium" href="#">Sustainability</a>
-            <a className="text-zinc-600 hover:text-emerald-600 transition-colors tracking-tight font-medium" href="#">Architecture</a>
+    <>
+      {/* ── Top Navigation ──────────────────────────────────── */}
+      <nav
+        style={{
+          position: 'fixed', top: 0, width: '100%', zIndex: 100,
+          background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(48px)',
+          WebkitBackdropFilter: 'blur(48px)', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+        }}
+      >
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '1rem 2rem', maxWidth: '1536px', margin: '0 auto',
+        }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.05em', color: '#18181b' }}>
+            AetherGrid
           </div>
-          <div className="flex items-center gap-4">
-            <span className="material-symbols-outlined p-2 hover:bg-zinc-100/50 rounded-full transition-all cursor-pointer">notifications</span>
-            <span className="material-symbols-outlined p-2 hover:bg-zinc-100/50 rounded-full transition-all cursor-pointer">account_circle</span>
-            <button onClick={onLaunch} className="bg-gradient-to-r from-[#006d36] to-[#4ade80] text-white px-8 py-3 rounded-full font-semibold shadow-md active:scale-95 transition-all">Get Started</button>
+          <div className="hide-mobile" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+            <a href="#" style={{ color: '#047857', fontWeight: 600, borderBottom: '2px solid #10b981', paddingBottom: '4px', textDecoration: 'none', fontSize: '0.875rem' }}>Grid Intelligence</a>
+            <a href="#" style={{ color: '#52525b', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>Solar Yield</a>
+            <a href="#" style={{ color: '#52525b', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>Sustainability</a>
+            <a href="#" style={{ color: '#52525b', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>Architecture</a>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span className="material-symbols-outlined" style={{ padding: '8px', cursor: 'pointer', borderRadius: '50%', fontSize: '24px' }}>notifications</span>
+            <span className="material-symbols-outlined" style={{ padding: '8px', cursor: 'pointer', borderRadius: '50%', fontSize: '24px' }}>account_circle</span>
+            <button
+              onClick={() => navigate('/simulation')}
+              style={{
+                background: 'linear-gradient(to right, #006d36, #4ade80)',
+                color: '#fff', padding: '0.75rem 2rem', borderRadius: '9999px',
+                fontWeight: 600, border: 'none', cursor: 'pointer', fontSize: '0.875rem',
+                boxShadow: '0 4px 14px rgba(0,109,54,0.25)',
+              }}
+            >
+              Get Started
+            </button>
           </div>
         </div>
       </nav>
 
       <main>
-        {/* HERO EXPANSION SECTION */}
-        <section className="hero-sticky-container relative z-0">
+        {/* ── HERO EXPANSION SECTION ───────────────────────── */}
+        <section className="hero-sticky-container" style={{ position: 'relative' }}>
           <div className="sticky-wrapper">
-            {/* Background Media that expands */}
-            <div className="relative w-[70vw] h-[70vw] max-w-[900px] max-h-[900px] rounded-full overflow-hidden shadow-2xl z-10 bg-zinc-900 mx-auto flex-shrink-0" id="hero-media-container">
-              <img className="w-full h-full object-cover scale-110" alt="Ultra-modern minimalist sustainable house with glass walls and rooftop solar panels" id="hero-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPB3DU7d4KYGx8oDPn3u81RFHUQZ6Kx1XAxMoOzAdylYLSLpjG9AeR5nQjhQBdashIp4WG1oDjJTYVZncbJt3MFbPgDuIg0SCP_oFktvJ9rVIooM1ZEIyW4lxgLEir14cO8BEYMSLhB7Ww4_Rud7gTQ9-9cJMcqZ8R6Prc96yXz3yS_phImjECs79gSWCyk2MLFxd1nIqxApf3701UqKnBeapd-NISne3IQoaWp6i5UKYH4rfYUrTcHCpkZuRsG6U_dmdeP025oGBt" />
-              <div className="absolute inset-0 bg-black/20"></div>
-              {/* Inner Content that appears as it expands */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 opacity-0 pointer-events-none" id="hero-inner-content">
-                <p className="text-white/80 text-xl max-w-2xl font-medium leading-relaxed mb-8">
-                  AetherGrid transforms your living space into a high-performance energy ecosystem, blending aesthetic intelligence with decentralized solar mastery.
+            {/* Background media container */}
+            <div
+              ref={mediaRef}
+              id="hero-media-container"
+              style={{
+                position: 'relative', width: '40vw', height: '60vh',
+                borderRadius: '9999px', overflow: 'hidden',
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+                zIndex: 10, background: '#18181b',
+              }}
+            >
+              <img
+                ref={heroImgRef}
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPB3DU7d4KYGx8oDPn3u81RFHUQZ6Kx1XAxMoOzAdylYLSLpjG9AeR5nQjhQBdashIp4WG1oDjJTYVZncbJt3MFbPgDuIg0SCP_oFktvJ9rVIooM1ZEIyW4lxgLEir14cO8BEYMSLhB7Ww4_Rud7gTQ9-9cJMcqZ8R6Prc96yXz3yS_phImjECs79gSWCyk2MLFxd1nIqxApf3701UqKnBeapd-NISne3IQoaWp6i5UKYH4rfYUrTcHCpkZuRsG6U_dmdeP025oGBt"
+                alt="Ultra-modern sustainable house with solar panels"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.1)' }}
+              />
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)' }} />
+
+              {/* Inner content (fades in on scroll) */}
+              <div
+                ref={innerContentRef}
+                style={{
+                  position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+                  padding: '2rem', opacity: 0, pointerEvents: 'none',
+                }}
+              >
+                <p style={{
+                  color: 'rgba(255,255,255,0.85)', fontSize: '1.25rem',
+                  maxWidth: '42rem', fontWeight: 500, lineHeight: 1.7, marginBottom: '2rem',
+                }}>
+                  AetherGrid transforms your living space into a high-performance energy ecosystem,
+                  blending aesthetic intelligence with decentralized solar mastery.
                 </p>
-                <div className="flex gap-4">
-                  <button onClick={onLaunch} className="bg-[#006d36] text-white px-10 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all">Launch Simulation</button>
-                  <button className="bg-white/20 backdrop-blur-md text-white border border-white/30 px-10 py-4 rounded-full font-bold text-lg hover:bg-white/30 transition-all">Explore Tech</button>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button
+                    onClick={() => navigate('/simulation')}
+                    style={{
+                      background: '#006d36', color: '#fff', padding: '1rem 2.5rem',
+                      borderRadius: '9999px', fontWeight: 700, fontSize: '1.125rem',
+                      border: 'none', cursor: 'pointer',
+                      boxShadow: '0 20px 40px rgba(0,109,54,0.3)',
+                    }}
+                  >
+                    Launch Simulation
+                  </button>
+                  <button style={{
+                    background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(12px)',
+                    color: '#fff', border: '1px solid rgba(255,255,255,0.3)',
+                    padding: '1rem 2.5rem', borderRadius: '9999px',
+                    fontWeight: 700, fontSize: '1.125rem', cursor: 'pointer',
+                  }}>
+                    Explore Tech
+                  </button>
                 </div>
               </div>
             </div>
+
             {/* Title that splits */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full flex justify-center items-center z-20 pointer-events-none overflow-hidden">
-              <div className="flex items-center gap-4 text-6xl md:text-[10rem] font-extrabold tracking-tighter whitespace-nowrap">
-                <span className="text-[#191c1e]" id="hero-title-left">THE ENERGY</span>
-                <span className="text-gradient-primary" id="hero-title-right">CURATOR.</span>
+            <div style={{
+              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', zIndex: 20, pointerEvents: 'none', overflow: 'hidden',
+            }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '1rem',
+                fontSize: 'clamp(3rem, 10vw, 10rem)',
+                fontWeight: 800, letterSpacing: '-0.05em', whiteSpace: 'nowrap',
+              }}>
+                <span ref={titleLeftRef} id="hero-title-left" style={{ color: 'var(--on-surface)' }}>
+                  THE ENERGY
+                </span>
+                <span ref={titleRightRef} id="hero-title-right" className="text-gradient-primary">
+                  CURATOR.
+                </span>
               </div>
             </div>
-            {/* Scroll Indicator */}
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center text-[#3d4a3e] gap-2 animate-bounce">
-              <span className="text-xs font-bold uppercase tracking-widest">Scroll to Begin</span>
+
+            {/* Scroll indicator */}
+            <div style={{
+              position: 'absolute', bottom: '2.5rem', left: '50%', transform: 'translateX(-50%)',
+              zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center',
+              color: 'var(--on-surface-variant)', gap: '0.5rem',
+              animation: 'bounce 1.5s infinite',
+            }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+                Scroll to Begin
+              </span>
               <span className="material-symbols-outlined">expand_more</span>
             </div>
           </div>
         </section>
 
-        {/* Content sections that scroll OVER the expanded hero */}
-        <div className="content-over-hero relative z-10 -mt-[100vh]">
-
-          {/* Stage 2: Systemic Vulnerability */}
-          <section className="reveal-section py-32 px-8 bg-[#f2f4f6] relative z-40" id="vulnerability-section">
-            <div className="max-w-7xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-24 items-center">
-                <div className="order-2 md:order-1">
-                  <div className="relative rounded-lg overflow-hidden bg-zinc-900 aspect-square flex items-center justify-center p-12 shadow-2xl">
-                    <div className="absolute inset-0 opacity-40">
-                      <img className="w-full h-full object-cover grayscale" alt="Aerial drone view of a dark sprawling city during a massive blackout" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXz1fUdfT887T97S9wUjXos0Id6bOV7Yo1zqR0TMrXXi26dawF-C5GSCfZTXS4yKw0Mjkof6nmp1GesT70VxjOGeLzkjsBZB4TYtnHt40KN1Ug0-QuGp-kX6TjoQ7EdQxBdfl2H2KfxJv3ZM1DiLuQfZoRoBN_nmk5tfYMRN5rEnR__9ZoJjRzvjH6VXPukHQYXsa797gi6W4FhtajRlc2N7KtyIbSriqGvT1I9Kxu_gYmZ_xtay8GcIQnInsuwYmUzs6AOHXA0zK7" />
-                    </div>
-                    <div className="z-10 text-center">
-                      <span className="material-symbols-outlined text-[#ba1a1a] text-7xl mb-6">broken_image</span>
-                      <h3 className="text-white text-3xl font-bold mb-4">Systemic Vulnerability</h3>
-                      <p className="text-zinc-400">Traditional grids are built on fragile, centralized nodes—one failure cascades into total darkness.</p>
-                    </div>
-                  </div>
+        {/* ── Section 2: Systemic Vulnerability ────────────── */}
+        <section className="reveal-section" style={{
+          padding: '8rem 2rem', background: 'var(--surface-container-low)',
+          position: 'relative', zIndex: 40,
+        }}>
+          <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+              gap: '6rem', alignItems: 'center',
+            }}>
+              {/* Image card */}
+              <div style={{ position: 'relative', borderRadius: '1rem', overflow: 'hidden', background: '#18181b', aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+                <div style={{ position: 'absolute', inset: 0, opacity: 0.4 }}>
+                  <img
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXz1fUdfT887T97S9wUjXos0Id6bOV7Yo1zqR0TMrXXi26dawF-C5GSCfZTXS4yKw0Mjkof6nmp1GesT70VxjOGeLzkjsBZB4TYtnHt40KN1Ug0-QuGp-kX6TjoQ7EdQxBdfl2H2KfxJv3ZM1DiLuQfZoRoBN_nmk5tfYMRN5rEnR__9ZoJjRzvjH6VXPukHQYXsa797gi6W4FhtajRlc2N7KtyIbSriqGvT1I9Kxu_gYmZ_xtay8GcIQnInsuwYmUzs6AOHXA0zK7"
+                    alt="City blackout aerial view"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(1)' }}
+                  />
                 </div>
-                <div className="order-1 md:order-2">
-                  <span className="text-[#ba1a1a] font-bold tracking-widest text-xs uppercase mb-4 block">The Problem</span>
-                  <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-8">The invisible <br /> fragility of legacy.</h2>
-                  <p className="text-lg text-[#3d4a3e] mb-12">Yesterday&apos;s grid was designed for a different century. It&apos;s rigid, opaque, and increasingly unable to handle the volatility of the modern climate and the surge of renewable peaks.</p>
-                  <div className="space-y-8">
-                    <div className="flex gap-6 items-start">
-                      <div className="bg-[#ffdad6] p-4 rounded-full">
-                        <span className="material-symbols-outlined text-[#ba1a1a]">priority_high</span>
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-xl mb-1">Single Point of Failure</h4>
-                        <p className="text-[#3d4a3e]">Central power plants leave communities exposed to weather-related outages.</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-6 items-start">
-                      <div className="bg-[#ffdad6] p-4 rounded-full">
-                        <span className="material-symbols-outlined text-[#ba1a1a]">trending_down</span>
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-xl mb-1">Efficiency Loss</h4>
-                        <p className="text-[#3d4a3e]">Up to 15% of energy is lost during transmission before it reaches your home.</p>
-                      </div>
-                    </div>
-                  </div>
+                <div style={{ zIndex: 10, textAlign: 'center' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '4.5rem', color: 'var(--error)', marginBottom: '1.5rem', display: 'block' }}>broken_image</span>
+                  <h3 style={{ color: '#fff', fontSize: '1.875rem', fontWeight: 700, marginBottom: '1rem' }}>Systemic Vulnerability</h3>
+                  <p style={{ color: '#a1a1aa' }}>Traditional grids are built on fragile, centralized nodes—one failure cascades into total darkness.</p>
                 </div>
               </div>
-            </div>
-          </section>
 
-          {/* Stage 3: Distributed Harmony */}
-          <section className="reveal-section py-24 px-8 text-center bg-white relative z-40">
-            <div className="max-w-4xl mx-auto">
-              <span className="text-[#006d36] font-bold tracking-widest text-xs uppercase mb-6 block">The Paradigm Shift</span>
-              <h2 className="text-4xl md:text-6xl font-extrabold tracking-tighter mb-12">From central command to <span className="text-gradient-primary">distributed harmony.</span></h2>
-              <div className="relative h-px w-full bg-gradient-to-r from-transparent via-[#bccabb]/30 to-transparent my-16">
-                <div className="absolute left-1/2 -translate-x-1/2 -top-4 bg-white px-4">
-                  <span className="material-symbols-outlined text-[#006d36] text-4xl">swap_horiz</span>
-                </div>
-              </div>
-              <p className="text-xl text-[#3d4a3e] italic font-medium">&quot;We are not just changing how we power our homes; we are changing how our homes empower the world.&quot;</p>
-            </div>
-          </section>
-
-          {/* Solution Reveal */}
-          <section className="reveal-section py-32 px-8 overflow-hidden bg-[#f2f4f6] relative z-40">
-            <div className="max-w-7xl mx-auto">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                <div>
-                  <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-8">Autonomous <br /> Energy Resilience.</h2>
-                  <p className="text-lg text-[#3d4a3e] mb-12">Your home becomes its own utility. AetherGrid microgrids store solar yield locally and share surpluses with the neighborhood—creating a self-healing, living network.</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="bg-white p-8 rounded-full shadow-sm border border-[#bccabb]/10 text-center">
-                      <span className="material-symbols-outlined text-[#006d36] text-3xl mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>solar_power</span>
-                      <h4 className="font-bold text-lg mb-2">Solar Harvesting</h4>
-                      <p className="text-sm text-[#3d4a3e]">Intelligent tracking optimizes every ray of light.</p>
+              {/* Text content */}
+              <div>
+                <span style={{ color: 'var(--error)', fontWeight: 700, letterSpacing: '0.15em', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '1rem', display: 'block' }}>
+                  The Problem
+                </span>
+                <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, letterSpacing: '-0.025em', marginBottom: '2rem', lineHeight: 1.1 }}>
+                  The invisible <br /> fragility of legacy.
+                </h2>
+                <p style={{ fontSize: '1.125rem', color: 'var(--on-surface-variant)', marginBottom: '3rem', lineHeight: 1.7 }}>
+                  Yesterday&apos;s grid was designed for a different century. It&apos;s rigid, opaque, and increasingly
+                  unable to handle the volatility of the modern climate and the surge of renewable peaks.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                  <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+                    <div style={{ background: 'var(--error-container)', padding: '1rem', borderRadius: '9999px', flexShrink: 0 }}>
+                      <span className="material-symbols-outlined" style={{ color: 'var(--error)' }}>priority_high</span>
                     </div>
-                    <div className="bg-white p-8 rounded-full shadow-sm border border-[#bccabb]/10 text-center">
-                      <span className="material-symbols-outlined text-[#00668a] text-3xl mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>battery_charging_full</span>
-                      <h4 className="font-bold text-lg mb-2">Smart Storage</h4>
-                      <p className="text-sm text-[#3d4a3e]">Solid-state reserves for 24/7 reliability.</p>
-                    </div>
-                    <div className="bg-white p-8 rounded-full shadow-sm border border-[#bccabb]/10 text-center">
-                      <span className="material-symbols-outlined text-[#006d36] text-3xl mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>hub</span>
-                      <h4 className="font-bold text-lg mb-2">Grid Sharing</h4>
-                      <p className="text-sm text-[#3d4a3e]">Monetize your excess energy automatically.</p>
-                    </div>
-                    <div className="bg-white p-8 rounded-full shadow-sm border border-[#bccabb]/10 text-center">
-                      <span className="material-symbols-outlined text-[#00668a] text-3xl mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
-                      <h4 className="font-bold text-lg mb-2">Total Autonomy</h4>
-                      <p className="text-sm text-[#3d4a3e]">Seamless island-mode during grid outages.</p>
+                    <div>
+                      <h4 style={{ fontWeight: 700, fontSize: '1.25rem', marginBottom: '0.25rem' }}>Single Point of Failure</h4>
+                      <p style={{ color: 'var(--on-surface-variant)' }}>Central power plants leave communities exposed to weather-related outages.</p>
                     </div>
                   </div>
-                </div>
-                <div className="relative">
-                  <div className="aspect-square rounded-full border-2 border-dashed border-[#006d36]/20 absolute -inset-10 animate-[spin_20s_linear_infinite]"></div>
-                  <div className="relative z-10 rounded-full overflow-hidden shadow-2xl">
-                    <img className="w-full h-full object-cover" alt="Conceptual visualization of a futuristic city at sunset" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsqcRS5WifMRpACcqsHIFleApuVmLmVev3EmtooKA0_00t58lXjCwStZZ07mIHfGAsD9DFMCCd3dnkfLtYbQQNZ1pRCwjL-frQOuPo5nhhfgtgPvyqC_azs-FwWdyTV6hpkkPAko4c4G5_IKegggDbWIUPRMSsph8S_sB7M5tiqhwQ9fpOcpj-Ja1w5Y-IXobCJ3YVZxQDBk9DxrnfsAZAqfP_GI4S4Yiek68hH2yczdve_Hlhc1llFTycuVMwgyL4M2a2qE-1fDQf" />
+                  <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+                    <div style={{ background: 'var(--error-container)', padding: '1rem', borderRadius: '9999px', flexShrink: 0 }}>
+                      <span className="material-symbols-outlined" style={{ color: 'var(--error)' }}>trending_down</span>
+                    </div>
+                    <div>
+                      <h4 style={{ fontWeight: 700, fontSize: '1.25rem', marginBottom: '0.25rem' }}>Efficiency Loss</h4>
+                      <p style={{ color: 'var(--on-surface-variant)' }}>Up to 15% of energy is lost during transmission before it reaches your home.</p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* AI Layer */}
-          <section className="reveal-section py-32 px-8 bg-[#191c1e] text-white relative overflow-hidden z-40">
-            <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[#006d36]/20 to-transparent"></div>
-            <div className="max-w-7xl mx-auto relative z-10">
-              <div className="max-w-2xl mb-20">
-                <span className="text-[#4ade80] font-bold tracking-widest text-xs uppercase mb-6 block">Intelligence Layer</span>
-                <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-8">The Mind inside <br /> the Machine.</h2>
-                <p className="text-xl text-zinc-400">AetherGrid&apos;s AI doesn&apos;t just monitor—it predicts. Weather patterns, consumption habits, and grid pricing are processed in real-time to maximize impact.</p>
+        {/* ── Section 3: Distributed Harmony ───────────────── */}
+        <section className="reveal-section" style={{
+          padding: '6rem 2rem', textAlign: 'center', background: '#fff',
+          position: 'relative', zIndex: 40,
+        }}>
+          <div style={{ maxWidth: '56rem', margin: '0 auto' }}>
+            <span style={{ color: 'var(--primary)', fontWeight: 700, letterSpacing: '0.15em', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '1.5rem', display: 'block' }}>
+              The Paradigm Shift
+            </span>
+            <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', fontWeight: 800, letterSpacing: '-0.05em', marginBottom: '3rem', lineHeight: 1.1 }}>
+              From central command to{' '}
+              <span className="text-gradient-primary">distributed harmony.</span>
+            </h2>
+            <div style={{ position: 'relative', height: '1px', width: '100%', background: 'linear-gradient(to right, transparent, var(--outline-variant), transparent)', margin: '4rem 0' }}>
+              <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', top: '-1rem', background: '#fff', padding: '0 1rem' }}>
+                <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: '2rem' }}>swap_horiz</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="bg-zinc-900/50 backdrop-blur-xl p-10 rounded-3xl border border-zinc-800">
-                  <div className="text-5xl font-light text-[#4ade80] mb-6">98%</div>
-                  <h4 className="text-xl font-bold mb-4">Predictive Accuracy</h4>
-                  <p className="text-zinc-500">Neural networks forecast demand based on behavioral signals and historical climate data.</p>
+            </div>
+            <p style={{ fontSize: '1.25rem', color: 'var(--on-surface-variant)', fontStyle: 'italic', fontWeight: 500 }}>
+              &quot;We are not just changing how we power our homes; we are changing how our homes empower the world.&quot;
+            </p>
+          </div>
+        </section>
+
+        {/* ── Section 4: Solution Reveal ────────────────────── */}
+        <section className="reveal-section" style={{
+          padding: '8rem 2rem', overflow: 'hidden',
+          background: 'var(--surface-container-low)', position: 'relative', zIndex: 40,
+        }}>
+          <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+              gap: '4rem', alignItems: 'center',
+            }}>
+              <div>
+                <h2 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 800, letterSpacing: '-0.025em', marginBottom: '2rem', lineHeight: 1.1 }}>
+                  Autonomous <br /> Energy Resilience.
+                </h2>
+                <p style={{ fontSize: '1.125rem', color: 'var(--on-surface-variant)', marginBottom: '3rem', lineHeight: 1.7 }}>
+                  Your home becomes its own utility. AetherGrid microgrids store solar yield locally
+                  and share surpluses with the neighborhood—creating a self-healing, living network.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                  {[
+                    { icon: 'solar_power', label: 'Solar Harvesting', desc: 'Intelligent tracking optimizes every ray of light.', color: 'var(--primary)' },
+                    { icon: 'battery_charging_full', label: 'Smart Storage', desc: 'Solid-state reserves for 24/7 reliability.', color: 'var(--secondary)' },
+                    { icon: 'hub', label: 'Grid Sharing', desc: 'Monetize your excess energy automatically.', color: 'var(--primary)' },
+                    { icon: 'verified_user', label: 'Total Autonomy', desc: 'Seamless island-mode during grid outages.', color: 'var(--secondary)' },
+                  ].map((item) => (
+                    <div key={item.label} style={{
+                      background: 'var(--surface-container-lowest)', padding: '2rem',
+                      borderRadius: '9999px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                      border: '1px solid rgba(188,202,187,0.1)', textAlign: 'center',
+                    }}>
+                      <span className="material-symbols-outlined" style={{ color: item.color, fontSize: '1.875rem', marginBottom: '1rem', display: 'block', fontVariationSettings: "'FILL' 1" }}>
+                        {item.icon}
+                      </span>
+                      <h4 style={{ fontWeight: 700, fontSize: '1.125rem', marginBottom: '0.5rem' }}>{item.label}</h4>
+                      <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>{item.desc}</p>
+                    </div>
+                  ))}
                 </div>
-                <div className="bg-zinc-900/50 backdrop-blur-xl p-10 rounded-3xl border border-zinc-800">
-                  <div className="text-5xl font-light text-[#7bd0ff] mb-6">0ms</div>
-                  <h4 className="text-xl font-bold mb-4">Transfer Latency</h4>
-                  <p className="text-zinc-500">Switching from grid to solar is instantaneous. Your electronics will never notice the transition.</p>
-                </div>
-                <div className="bg-zinc-900/50 backdrop-blur-xl p-10 rounded-3xl border border-zinc-800">
-                  <div className="text-5xl font-light text-[#4ade80] mb-6">40%</div>
-                  <h4 className="text-xl font-bold mb-4">Avg. Efficiency Gain</h4>
-                  <p className="text-zinc-500">Machine learning optimizes battery discharge cycles to extend hardware life.</p>
+              </div>
+
+              {/* Circular image w/ spinning border */}
+              <div style={{ position: 'relative' }}>
+                <div style={{
+                  aspectRatio: '1', borderRadius: '9999px', border: '2px dashed rgba(0,109,54,0.2)',
+                  position: 'absolute', inset: '-2.5rem',
+                  animation: 'spin-slow 20s linear infinite',
+                }} />
+                <div style={{ position: 'relative', zIndex: 10, borderRadius: '9999px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+                  <img
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsqcRS5WifMRpACcqsHIFleApuVmLmVev3EmtooKA0_00t58lXjCwStZZ07mIHfGAsD9DFMCCd3dnkfLtYbQQNZ1pRCwjL-frQOuPo5nhhfgtgPvyqC_azs-FwWdyTV6hpkkPAko4c4G5_IKegggDbWIUPRMSsph8S_sB7M5tiqhwQ9fpOcpj-Ja1w5Y-IXobCJ3YVZxQDBk9DxrnfsAZAqfP_GI4S4Yiek68hH2yczdve_Hlhc1llFTycuVMwgyL4M2a2qE-1fDQf"
+                    alt="Futuristic city at sunset"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 </div>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* Final CTA */}
-          <section className="reveal-section py-40 px-8 bg-white relative z-40">
-            <div className="max-w-5xl mx-auto text-center">
-              <div className="mb-12 inline-block">
-                <span className="material-symbols-outlined text-[#006d36] text-7xl mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-              </div>
-              <h2 className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-10 leading-tight">Ready to curate your <br /> <span className="text-gradient-primary">energy future?</span></h2>
-              <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                <button onClick={onLaunch} className="bg-[#006d36] text-white px-12 py-5 rounded-full font-bold text-xl shadow-2xl hover:scale-105 transition-transform">Get Started Today</button>
-                <button className="bg-[#f2f4f6] text-[#191c1e] px-12 py-5 rounded-full font-bold text-xl hover:bg-[#e6e8ea] transition-colors">Request Consultation</button>
-              </div>
-              <p className="mt-12 text-[#3d4a3e]">Join 15,000+ homes powered by AetherGrid intelligence.</p>
+        {/* ── Section 5: AI Layer (dark) ────────────────────── */}
+        <section className="reveal-section" style={{
+          padding: '8rem 2rem', background: 'var(--on-background)', color: '#fff',
+          position: 'relative', overflow: 'hidden', zIndex: 40,
+        }}>
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '33%', height: '100%', background: 'linear-gradient(to left, rgba(0,109,54,0.2), transparent)' }} />
+          <div style={{ maxWidth: '80rem', margin: '0 auto', position: 'relative', zIndex: 10 }}>
+            <div style={{ maxWidth: '42rem', marginBottom: '5rem' }}>
+              <span style={{ color: 'var(--primary-container)', fontWeight: 700, letterSpacing: '0.15em', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '1.5rem', display: 'block' }}>
+                Intelligence Layer
+              </span>
+              <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', fontWeight: 800, letterSpacing: '-0.025em', marginBottom: '2rem', lineHeight: 1.1 }}>
+                The Mind inside <br /> the Machine.
+              </h2>
+              <p style={{ fontSize: '1.25rem', color: '#71717a' }}>
+                AetherGrid&apos;s AI doesn&apos;t just monitor—it predicts. Weather patterns, consumption habits,
+                and grid pricing are processed in real-time to maximize impact.
+              </p>
             </div>
-          </section>
-        </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
+              {[
+                { value: '98%', label: 'Predictive Accuracy', desc: 'Neural networks forecast demand based on behavioral signals and historical climate data.', color: 'var(--primary-container)' },
+                { value: '0ms', label: 'Transfer Latency', desc: "Switching from grid to solar is instantaneous. Your electronics will never notice the transition.", color: 'var(--secondary-fixed-dim)' },
+                { value: '40%', label: 'Avg. Efficiency Gain', desc: 'Machine learning optimizes battery discharge cycles to extend hardware life.', color: 'var(--primary-container)' },
+              ].map((item) => (
+                <div key={item.label} style={{
+                  background: 'rgba(24,24,27,0.5)', backdropFilter: 'blur(20px)',
+                  padding: '2.5rem', borderRadius: '1.5rem',
+                  border: '1px solid rgba(63,63,70,1)',
+                }}>
+                  <div style={{ fontSize: '3rem', fontWeight: 300, color: item.color, marginBottom: '1.5rem' }}>
+                    {item.value}
+                  </div>
+                  <h4 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>{item.label}</h4>
+                  <p style={{ color: '#71717a' }}>{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Section 6: Final CTA ─────────────────────────── */}
+        <section className="reveal-section" style={{
+          padding: '10rem 2rem', background: '#fff',
+          position: 'relative', zIndex: 40,
+        }}>
+          <div style={{ maxWidth: '64rem', margin: '0 auto', textAlign: 'center' }}>
+            <div style={{ marginBottom: '3rem' }}>
+              <span
+                className="material-symbols-outlined"
+                style={{ color: 'var(--primary)', fontSize: '4.5rem', fontVariationSettings: "'FILL' 1" }}
+              >
+                auto_awesome
+              </span>
+            </div>
+            <h2 style={{
+              fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 800,
+              letterSpacing: '-0.05em', marginBottom: '2.5rem', lineHeight: 1.1,
+            }}>
+              Ready to curate your <br />
+              <span className="text-gradient-primary">energy future?</span>
+            </h2>
+            <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => navigate('/simulation')}
+                style={{
+                  background: 'var(--primary)', color: '#fff',
+                  padding: '1.25rem 3rem', borderRadius: '9999px',
+                  fontWeight: 700, fontSize: '1.25rem', border: 'none', cursor: 'pointer',
+                  boxShadow: '0 25px 50px -12px rgba(0,109,54,0.3)',
+                  transition: 'transform 0.2s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+              >
+                Get Started Today
+              </button>
+              <button style={{
+                background: 'var(--surface-container-low)', color: 'var(--on-surface)',
+                padding: '1.25rem 3rem', borderRadius: '9999px',
+                fontWeight: 700, fontSize: '1.25rem', border: 'none', cursor: 'pointer',
+                transition: 'background 0.2s',
+              }}>
+                Request Consultation
+              </button>
+            </div>
+            <p style={{ marginTop: '3rem', color: 'var(--on-surface-variant)' }}>
+              Join 15,000+ homes powered by AetherGrid intelligence.
+            </p>
+          </div>
+        </section>
       </main>
 
-      <footer className="bg-zinc-50 py-16 px-8 border-t border-zinc-100/10 relative z-40">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      {/* ── Footer ──────────────────────────────────────────── */}
+      <footer style={{
+        background: '#fafafa', padding: '4rem 2rem',
+        borderTop: '1px solid rgba(228,228,231,0.3)', position: 'relative', zIndex: 40,
+      }}>
+        <div style={{
+          maxWidth: '80rem', margin: '0 auto', display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem', alignItems: 'center',
+        }}>
           <div>
-            <div className="text-lg font-bold text-zinc-900 mb-4">AetherGrid</div>
-            <p className="text-sm leading-relaxed text-zinc-500 max-w-sm">
+            <div style={{ fontSize: '1.125rem', fontWeight: 700, color: '#18181b', marginBottom: '1rem' }}>AetherGrid</div>
+            <p style={{ fontSize: '0.875rem', lineHeight: 1.7, color: '#71717a', maxWidth: '24rem' }}>
               © 2024 AetherGrid. Redefining the digital curation of sustainable energy. Built for the modern architect.
             </p>
           </div>
-          <div className="flex flex-wrap gap-8 md:justify-end">
-            <a className="text-zinc-500 hover:text-emerald-500 transition-all duration-300 text-sm" href="#">Impact Report</a>
-            <a className="text-zinc-500 hover:text-emerald-500 transition-all duration-300 text-sm" href="#">Privacy Policy</a>
-            <a className="text-zinc-500 hover:text-emerald-500 transition-all duration-300 text-sm" href="#">Grid API</a>
-            <a className="text-zinc-500 hover:text-emerald-500 transition-all duration-300 text-sm" href="#">Contact Us</a>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'flex-end' }}>
+            {['Impact Report', 'Privacy Policy', 'Grid API', 'Contact Us'].map((link) => (
+              <a key={link} href="#" style={{ color: '#71717a', textDecoration: 'none', fontSize: '0.875rem', transition: 'color 0.3s' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#10b981')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#71717a')}
+              >
+                {link}
+              </a>
+            ))}
           </div>
         </div>
       </footer>
 
-    </div>
-  );
+      {/* bounce keyframe for scroll indicator */}
+      <style>{`
+        @keyframes bounce {
+          0%, 100% { transform: translateX(-50%) translateY(0); }
+          50% { transform: translateX(-50%) translateY(-10px); }
+        }
+        @media (max-width: 768px) {
+          .hide-mobile { display: none !important; }
+        }
+      `}</style>
+    </>
+  )
 }
