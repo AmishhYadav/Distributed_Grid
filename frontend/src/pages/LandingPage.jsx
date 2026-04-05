@@ -71,7 +71,7 @@ export default function LandingPage({ onLaunch }) {
 <a className="font-headline uppercase tracking-widest text-xs text-slate-400 hover:text-cyan-200 transition-colors" href="#expand-section">Evolution</a>
 <a className="font-headline uppercase tracking-widest text-xs text-slate-400 hover:text-cyan-200 transition-colors" href="#intelligence">Intelligence</a>
 </div>
-<button className="bg-primary hover:bg-primary-dim text-on-primary font-headline uppercase tracking-widest text-[10px] px-6 py-2.5 rounded-full transition-all duration-300 transform hover:scale-95 shadow-[0_0_15px_rgba(109,221,255,0.3)]">
+<button onClick={onLaunch} className="bg-primary hover:bg-primary-dim text-on-primary font-headline uppercase tracking-widest text-[10px] px-6 py-2.5 rounded-full transition-all duration-300 transform hover:scale-95 shadow-[0_0_15px_rgba(109,221,255,0.3)]">
                 Get Started
             </button>
 </div>
@@ -95,7 +95,7 @@ export default function LandingPage({ onLaunch }) {
         The centralized era is over. Welcome to a self-healing, peer-to-peer energy network driven by kinetic intelligence.
     </p>
 <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
-<button className="w-full md:w-auto px-8 py-4 bg-primary text-on-primary font-headline font-bold uppercase tracking-widest text-xs rounded-lg hover:scale-105 transition-transform">
+<button onClick={onLaunch} className="w-full md:w-auto px-8 py-4 bg-primary text-on-primary font-headline font-bold uppercase tracking-widest text-xs rounded-lg hover:scale-105 transition-transform">
             Initialize Core
         </button>
 <button className="w-full md:w-auto px-8 py-4 border border-outline-variant text-on-surface font-headline font-bold uppercase tracking-widest text-xs rounded-lg hover:bg-surface-bright transition-colors">
@@ -230,7 +230,7 @@ export default function LandingPage({ onLaunch }) {
                     The infrastructure is ready. Your autonomy starts here. Join the kinetic evolution of global power.
                 </p>
 <div className="flex flex-col sm:flex-row gap-6 justify-center">
-<button className="px-12 py-5 bg-primary text-on-primary font-headline font-bold uppercase tracking-widest text-sm rounded-lg hover:shadow-[0_0_30px_rgba(109,221,255,0.4)] transition-all">
+<button onClick={onLaunch} className="px-12 py-5 bg-primary text-on-primary font-headline font-bold uppercase tracking-widest text-sm rounded-lg hover:shadow-[0_0_30px_rgba(109,221,255,0.4)] transition-all">
                         Launch Dashboard
                     </button>
 <button className="px-12 py-5 border border-primary/20 text-primary font-headline font-bold uppercase tracking-widest text-sm rounded-lg hover:bg-primary/5 transition-all">
