@@ -1,263 +1,313 @@
-import { useEffect } from "react";
-import "./LandingPage.css";
+import { useEffect } from 'react';
+import './LandingPage.css';
 
 export default function LandingPage({ onLaunch }) {
 
   useEffect(() => {
-        const handleScroll = () => {
-            const expandSection = document.getElementById("expand-section");
-            const mediaScaler = document.getElementById("media-scaler");
-            const titleLeft = document.getElementById("title-left");
-            const titleRight = document.getElementById("title-right");
-            const initialMedia = document.getElementById("initial-media");
-            const expandedMedia = document.getElementById("expanded-media");
-            const finalTitle = document.getElementById("final-title");
-            const solutionContent = document.getElementById("solution-content");
+    const mediaContainer = document.getElementById('hero-media-container');
+    const heroInnerContent = document.getElementById('hero-inner-content');
+    const titleLeft = document.getElementById('hero-title-left');
+    const titleRight = document.getElementById('hero-title-right');
+    const heroImg = document.getElementById('hero-img');
 
-            if (!expandSection) return;
+    const handleScroll = () => {
+      const scrollPos = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const windowWidth = window.innerWidth;
+      const scrollRange = windowHeight * 1.5;
 
-            const rect = expandSection.getBoundingClientRect();
-            const scrollPercent = Math.min(Math.max(-rect.top / (rect.height - window.innerHeight), 0), 1);
+      let progress = Math.min(scrollPos / scrollRange, 1);
 
-            const expansionProgress = Math.min(scrollPercent / 0.7, 1);
-            const scaleWidth = 400 + (window.innerWidth - 400) * expansionProgress;
-            const scaleHeight = 250 + (window.innerHeight - 250) * expansionProgress;
-            const borderRadius = 16 * (1 - expansionProgress);
+      if (mediaContainer) {
+        const startSize = Math.min(windowWidth * 0.7, 900);
+        const currentWidth = startSize + (progress * (windowWidth - startSize));
+        const currentHeight = startSize + (progress * (windowHeight - startSize));
+        const currentRadius = progress > 0.8 ? 0 : (1 - progress) * 50;
 
-            if(mediaScaler) {
-                mediaScaler.style.width = `${scaleWidth}px`;
-                mediaScaler.style.height = `${scaleHeight}px`;
-                mediaScaler.style.borderRadius = `${borderRadius}px`;
-            }
+        mediaContainer.style.width = `${currentWidth}px`;
+        mediaContainer.style.height = `${currentHeight}px`;
+        mediaContainer.style.borderRadius = `${currentRadius}%`;
+        mediaContainer.style.maxWidth = 'none';
+        mediaContainer.style.maxHeight = 'none';
+      }
 
-            const moveX = expansionProgress * 150;
-            if(titleLeft) {
-                titleLeft.style.transform = `translateY(-50%) translateX(-${moveX}%)`;
-                titleLeft.style.opacity = 1 - expansionProgress;
-            }
-            if(titleRight) {
-                titleRight.style.transform = `translateY(-50%) translateX(${moveX}%)`;
-                titleRight.style.opacity = 1 - expansionProgress;
-            }
+      if (heroImg) {
+        heroImg.style.transform = `scale(${1.1 - (progress * 0.1)})`;
+      }
 
-            if(initialMedia) initialMedia.style.opacity = 1 - expansionProgress;
-            if(expandedMedia) expandedMedia.style.opacity = expansionProgress;
+      const splitOffset = progress * 100;
+      if (titleLeft) titleLeft.style.transform = `translateX(-${splitOffset}vw)`;
+      if (titleRight) titleRight.style.transform = `translateX(${splitOffset}vw)`;
 
-            const contentProgress = Math.max((scrollPercent - 0.7) / 0.3, 0);
-            if(finalTitle) {
-                finalTitle.style.opacity = contentProgress;
-                finalTitle.style.pointerEvents = contentProgress > 0.5 ? "auto" : "none";
-            }
-            
-            if (solutionContent && contentProgress > 0) {
-                solutionContent.style.transform = `translateY(${(1 - contentProgress) * 50}px)`;
-            }
-        };
+      if (heroInnerContent) {
+        if (progress > 0.5) {
+          const contentProgress = (progress - 0.5) * 2;
+          heroInnerContent.style.opacity = contentProgress;
+          heroInnerContent.style.pointerEvents = 'auto';
+          heroInnerContent.style.transform = `translateY(${(1 - contentProgress) * 20}px)`;
+        } else {
+          heroInnerContent.style.opacity = 0;
+          heroInnerContent.style.pointerEvents = 'none';
+        }
+      }
 
-        window.addEventListener("scroll", handleScroll);
-        // Initial call
-        handleScroll();
-        
-        return () => window.removeEventListener("scroll", handleScroll);
+      if (titleLeft && titleLeft.parentElement) {
+        if (progress > 0.95) {
+          titleLeft.parentElement.style.opacity = 0;
+        } else {
+          titleLeft.parentElement.style.opacity = 1 - progress;
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+    handleScroll();
+
+    const observerOptions = {
+      threshold: 0.15,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal-section').forEach(section => {
+      sectionObserver.observe(section);
+    });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+      sectionObserver.disconnect();
+    };
   }, []);
 
   return (
-<div className="dark">
-<nav className="fixed top-0 w-full z-50 bg-transparent backdrop-blur-md">
-<div className="flex justify-between items-center px-8 py-6 w-full max-w-screen-2xl mx-auto">
-<div className="text-2xl font-bold tracking-tighter text-cyan-400 font-headline">GridMind</div>
-<div className="hidden md:flex items-center space-x-12">
-<a className="font-headline uppercase tracking-widest text-xs text-slate-400 hover:text-cyan-200 transition-colors" href="#hero">Intro</a>
-<a className="font-headline uppercase tracking-widest text-xs text-slate-400 hover:text-cyan-200 transition-colors" href="#expand-section">Evolution</a>
-<a className="font-headline uppercase tracking-widest text-xs text-slate-400 hover:text-cyan-200 transition-colors" href="#intelligence">Intelligence</a>
-</div>
-<button onClick={onLaunch} className="bg-primary hover:bg-primary-dim text-on-primary font-headline uppercase tracking-widest text-[10px] px-6 py-2.5 rounded-full transition-all duration-300 transform hover:scale-95 shadow-[0_0_15px_rgba(109,221,255,0.3)]">
-                Get Started
-            </button>
-</div>
-</nav>
-<main>
-{/*  HERO (INTRO) SECTION  */}
-<section className="relative min-h-[1024px] flex items-center justify-center overflow-hidden bg-surface" data-stitch-vh="min-h-[1024px]===min-h-screen" id="hero">
-<div className="absolute inset-0 overflow-hidden">
-<img alt="Neural Energy Grid" className="absolute inset-0 w-full h-full object-cover opacity-60 animate-zoom-fade" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOLK8cul8Iw5Fot0uX5HvZrRmzbOk85NN9287gq7RXSOVtY_LjENYOn3x-UMfvKkJf9aiwaguZHfTgVIUvBLuhasGnvw2WQ_LNyT2zUwFpCahJ6m2yfDdwpqno3ffWyJNL5nYON2L4556qfg3PNu60LKVxjoaV7BRNea8PkCqxJwnd1uDiDEjGThDpDOUKyd03RJWK2yqUuz6GKm7qMppqEg7bpJIOuvsRTB5lIdpqUKQSjYi2Qn45tqj590-uqhKx6uKRx4osPqQj"/>
-<div className="absolute inset-0 bg-gradient-to-b from-background-dark/80 via-background-dark/40 to-background-dark"></div>
-</div>
-<div className="relative z-10 text-center px-4 max-w-4xl">
-<div className="inline-block px-3 py-1 mb-6 border border-primary/30 rounded-full bg-primary/5">
-<span className="font-headline text-[10px] uppercase tracking-[0.2em] text-primary">Autonomous Energy Evolution</span>
-</div>
-<h1 className="font-headline text-5xl md:text-8xl font-bold tracking-tight text-on-surface mb-8 leading-[1.1]">
-        Powering the <br/>
-<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00d4ff] to-white">Autonomous Grid</span>
-</h1>
-<p className="text-on-surface-variant text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed font-light">
-        The centralized era is over. Welcome to a self-healing, peer-to-peer energy network driven by kinetic intelligence.
-    </p>
-<div className="flex flex-col md:flex-row gap-4 justify-center items-center">
-<button onClick={onLaunch} className="w-full md:w-auto px-8 py-4 bg-primary text-on-primary font-headline font-bold uppercase tracking-widest text-xs rounded-lg hover:scale-105 transition-transform">
-            Initialize Core
-        </button>
-<button className="w-full md:w-auto px-8 py-4 border border-outline-variant text-on-surface font-headline font-bold uppercase tracking-widest text-xs rounded-lg hover:bg-surface-bright transition-colors">
-            View System Specs
-        </button>
-</div>
-</div>
-<div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce z-20">
-<span className="material-symbols-outlined text-primary/40 text-4xl">keyboard_arrow_down</span>
-</div>
-</section>
-{/*  CINEMATIC TRANSITION (ScrollExpandMedia)  */}
-<section className="relative bg-black" id="expand-section">
-<div className="sticky-viewport">
-{/*  Split Title Behind Media  */}
-<div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden" id="split-title-container">
-<h2 className="scroll-title-part left-[10%] md:left-[20%] font-headline text-6xl md:text-9xl font-black text-error/30 uppercase italic" id="title-left" style={{transform: "translateY(-50%) translateX(0%)", opacity: "1"}}>Fragile</h2>
-<h2 className="scroll-title-part right-[10%] md:right-[20%] font-headline text-6xl md:text-9xl font-black text-primary/30 uppercase italic" id="title-right" style={{transform: "translateY(-50%) translateX(0%)", opacity: "1"}}>Evolution</h2>
-</div>
-{/*  Central Title (Visible when expanded)  */}
-<div className="absolute inset-0 flex flex-col items-center justify-center z-20 opacity-0 pointer-events-none px-6" id="final-title" style={{opacity: "0", pointerEvents: "none"}}>
-<h2 className="font-headline text-4xl md:text-7xl font-bold text-white text-center mb-8">DECENTRALIZED POWER</h2>
-{/*  Content (Solution details)  */}
-<div className="max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8 translate-y-10 transition-all duration-700" id="solution-content" style={{transform: "translateY(47.119141px)"}}>
-<div className="glass-panel p-8 rounded-2xl border-l-4 border-primary">
-<h3 className="font-headline text-2xl font-bold text-primary mb-4">Microgrid Sovereignty</h3>
-<p className="text-on-surface-variant text-sm leading-relaxed">
-                                Assets connect directly. Solar, batteries, and homes trade energy in real-time without middle-man interference.
-                            </p>
-<div className="mt-4 text-4xl font-headline font-bold text-white">99.9% <span className="text-xs uppercase text-primary/60 tracking-widest">Uptime</span></div>
-</div>
-<div className="glass-panel p-8 rounded-2xl border-l-4 border-secondary">
-<h3 className="font-headline text-2xl font-bold text-secondary mb-4">Peer-to-Peer Trade</h3>
-<p className="text-on-surface-variant text-sm leading-relaxed">
-                                Distributed Ledger Technology ensures every watt is accounted for and every trade is settled instantly.
-                            </p>
-<div className="mt-4 text-4xl font-headline font-bold text-white">40% <span className="text-xs uppercase text-secondary/60 tracking-widest">Cost Save</span></div>
-</div>
-</div>
-</div>
-{/*  The Expanding Media  */}
-<div className="media-container flex items-center justify-center bg-surface-container-highest border border-white/10" id="media-scaler" style={{width: "400px", height: "250px", borderRadius: "16px"}}>
-{/*  Initial State: Fragile Central Node Visualization  */}
-<div className="absolute inset-0 z-10 flex items-center justify-center" id="initial-media" style={{opacity: "1"}}>
-<div className="relative">
-<div className="w-16 h-16 bg-surface-container-highest border-2 border-error/20 rounded-full flex items-center justify-center z-10 relative">
-<span className="material-symbols-outlined text-error text-2xl flicker">account_tree</span>
-</div>
-<svg className="absolute inset-0 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] pointer-events-none" style={{top: "50%", left: "50%"}}>
-<g className="flicker">
-<line opacity="0.3" stroke="#ff716c" strokeDasharray="4" strokeWidth="1" x1="100" x2="10" y1="100" y2="10"></line>
-<line opacity="0.3" stroke="#ff716c" strokeDasharray="4" strokeWidth="1" x1="100" x2="190" y1="100" y2="10"></line>
-<line opacity="0.3" stroke="#ff716c" strokeDasharray="4" strokeWidth="1" x1="100" x2="10" y1="100" y2="190"></line>
-<line opacity="0.3" stroke="#ff716c" strokeDasharray="4" strokeWidth="1" x1="100" x2="190" y1="100" y2="190"></line>
-</g>
-</svg>
-</div>
-</div>
-{/*  Expanded State: Vibrant Energy Mesh  */}
-<div className="absolute inset-0 opacity-0 bg-black" id="expanded-media" style={{opacity: "0"}}>
-<img alt="Decentralized Network" className="w-full h-full object-cover opacity-40" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDz4eXpyP17-bxXqYYp2rY1qoP9KLg1qwOE8p9M6tZTPDmcH0pYL0qTJVUBG3i9p7wuM8j64xmU5RiVH4DlTaLIu3es748i2nI-7BOb3VhnnkheYlF7BumPqZ5scyhILs-9M67NWzCtpbDsEwKkJZbNGKgkwXMO1NWgtsJXLTjPaQgxlCZfBFfXh1Zjq-KIigAD_sRbTwo0llP-jnxJMZAVa9OYeX_zUTtgRrRhJnONnEocGI-cY7li2sSG1uGxIg6ExbfaBdBdFYkE"/>
-{/*  Solution Grid SVG Layer (Animated)  */}
-<div className="absolute inset-0 flex items-center justify-center">
-<svg className="w-full h-full opacity-60" viewBox="0 0 1000 1000">
-<path className="energy-line" d="M100 100 L900 100 L900 900 L100 900 Z" fill="none" stroke="#6dddff" strokeDasharray="10,20" strokeWidth="2"></path>
-<path className="energy-line" d="M100 100 L900 900 M900 100 L100 900" fill="none" stroke="#c180ff" strokeDasharray="20,10" strokeWidth="1.5"></path>
-<circle className="pulse-ring" cx="100" cy="100" fill="#080e1a" r="20" stroke="#6dddff" strokeWidth="4"></circle>
-<circle className="pulse-ring" cx="900" cy="100" fill="#080e1a" r="20" stroke="#6dddff" strokeWidth="4"></circle>
-<circle className="pulse-ring" cx="900" cy="900" fill="#080e1a" r="20" stroke="#6dddff" strokeWidth="4"></circle>
-<circle className="pulse-ring" cx="100" cy="900" fill="#080e1a" r="20" stroke="#6dddff" strokeWidth="4"></circle>
-<circle className="pulse-ring" cx="500" cy="500" fill="#080e1a" r="30" stroke="#c180ff" strokeWidth="4"></circle>
-</svg>
-</div>
-</div>
-</div>
-</div>
-</section>
-{/*  AI INTELLIGENCE LAYER  */}
-<section className="relative min-h-[1024px] flex items-center justify-center bg-surface px-8 overflow-hidden" data-stitch-vh="min-h-[1024px]===min-h-screen" id="intelligence">
-<div className="absolute inset-0 overflow-hidden">
-<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-primary/10 rounded-full animate-ping opacity-20"></div>
-<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-secondary/10 rounded-full animate-ping opacity-30" style={{animationDelay: "1s"}}></div>
-</div>
-<div className="relative z-10 max-w-screen-2xl w-full">
-<div className="text-center mb-16">
-<h2 className="font-headline text-4xl md:text-6xl font-bold text-on-surface mb-6">The Kinetic Intelligence</h2>
-<p className="text-on-surface-variant max-w-2xl mx-auto">AI doesn't just manage the grid; it predicts the future of energy demand and optimizes flow before a single watt is wasted.</p>
-</div>
-<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-{/*  Feature Card 1  */}
-<div className="glass-panel p-8 rounded-2xl group hover:border-primary/50 transition-all duration-500">
-<div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6 text-primary">
-<span className="material-symbols-outlined">psychology</span>
-</div>
-<h4 className="font-headline text-xl font-bold text-on-surface mb-4">Predictive Load</h4>
-<p className="text-on-surface-variant text-sm leading-relaxed mb-6">Analyzing weather patterns and historical usage to preemptively balance microgrid reserves.</p>
-<div className="h-1 w-full bg-surface-container rounded-full overflow-hidden">
-<div className="h-full bg-primary w-2/3"></div>
-</div>
-</div>
-{/*  Feature Card 2  */}
-<div className="glass-panel p-8 rounded-2xl group hover:border-secondary/50 transition-all duration-500 bg-surface-container-high">
-<div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center mb-6 text-secondary">
-<span className="material-symbols-outlined">auto_graph</span>
-</div>
-<h4 className="font-headline text-xl font-bold text-on-surface mb-4">Autonomous Arbitrage</h4>
-<p className="text-on-surface-variant text-sm leading-relaxed mb-6">Selling surplus energy to the main grid during peak pricing windows automatically.</p>
-<div className="flex gap-2">
-<div className="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
-<div className="w-2 h-2 rounded-full bg-secondary/50"></div>
-<div className="w-2 h-2 rounded-full bg-secondary/30"></div>
-</div>
-</div>
-{/*  Feature Card 3  */}
-<div className="glass-panel p-8 rounded-2xl group hover:border-tertiary/50 transition-all duration-500">
-<div className="w-12 h-12 bg-tertiary/10 rounded-lg flex items-center justify-center mb-6 text-tertiary">
-<span className="material-symbols-outlined">verified_user</span>
-</div>
-<h4 className="font-headline text-xl font-bold text-on-surface mb-4">Self-Healing Mesh</h4>
-<p className="text-on-surface-variant text-sm leading-relaxed mb-6">Instant rerouting of energy if a node goes offline, maintaining 100% systemic integrity.</p>
-<div className="text-[10px] font-headline text-tertiary/60 uppercase tracking-[0.2em]">Active Protection</div>
-</div>
-</div>
-</div>
-</section>
-{/*  FINAL CTA SECTION  */}
-<section className="min-h-[1024px] flex items-center justify-center bg-surface-container-low relative px-6 overflow-hidden" data-stitch-vh="min-h-[1024px]===min-h-screen">
-<div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
-<div className="relative z-10 text-center max-w-4xl">
-<h2 className="font-headline text-6xl md:text-9xl font-black text-on-surface mb-12 tracking-tighter italic">ENTER THE <span className="text-primary not-italic">GRID</span></h2>
-<p className="text-on-surface-variant text-xl mb-12 max-w-xl mx-auto leading-relaxed">
-                    The infrastructure is ready. Your autonomy starts here. Join the kinetic evolution of global power.
+    <div className="aethergrid-landing text-[#191c1e]">
+
+      {/* Top Navigation */}
+      <nav className="fixed top-0 w-full z-[100] bg-white/80 backdrop-blur-3xl shadow-sm">
+        <div className="flex justify-between items-center px-8 py-4 max-w-screen-2xl mx-auto">
+          <div className="text-2xl font-bold tracking-tighter text-zinc-900">AetherGrid</div>
+          <div className="hidden md:flex gap-8 items-center">
+            <a className="text-emerald-700 font-semibold border-b-2 border-emerald-500 pb-1 tracking-tight" href="#">Grid Intelligence</a>
+            <a className="text-zinc-600 hover:text-emerald-600 transition-colors tracking-tight font-medium" href="#">Solar Yield</a>
+            <a className="text-zinc-600 hover:text-emerald-600 transition-colors tracking-tight font-medium" href="#">Sustainability</a>
+            <a className="text-zinc-600 hover:text-emerald-600 transition-colors tracking-tight font-medium" href="#">Architecture</a>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="material-symbols-outlined p-2 hover:bg-zinc-100/50 rounded-full transition-all cursor-pointer">notifications</span>
+            <span className="material-symbols-outlined p-2 hover:bg-zinc-100/50 rounded-full transition-all cursor-pointer">account_circle</span>
+            <button onClick={onLaunch} className="bg-gradient-to-r from-[#006d36] to-[#4ade80] text-white px-8 py-3 rounded-full font-semibold shadow-md active:scale-95 transition-all">Get Started</button>
+          </div>
+        </div>
+      </nav>
+
+      <main>
+        {/* HERO EXPANSION SECTION */}
+        <section className="hero-sticky-container relative z-0">
+          <div className="sticky-wrapper">
+            {/* Background Media that expands */}
+            <div className="relative w-[70vw] h-[70vw] max-w-[900px] max-h-[900px] rounded-full overflow-hidden shadow-2xl z-10 bg-zinc-900 mx-auto flex-shrink-0" id="hero-media-container">
+              <img className="w-full h-full object-cover scale-110" alt="Ultra-modern minimalist sustainable house with glass walls and rooftop solar panels" id="hero-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPB3DU7d4KYGx8oDPn3u81RFHUQZ6Kx1XAxMoOzAdylYLSLpjG9AeR5nQjhQBdashIp4WG1oDjJTYVZncbJt3MFbPgDuIg0SCP_oFktvJ9rVIooM1ZEIyW4lxgLEir14cO8BEYMSLhB7Ww4_Rud7gTQ9-9cJMcqZ8R6Prc96yXz3yS_phImjECs79gSWCyk2MLFxd1nIqxApf3701UqKnBeapd-NISne3IQoaWp6i5UKYH4rfYUrTcHCpkZuRsG6U_dmdeP025oGBt" />
+              <div className="absolute inset-0 bg-black/20"></div>
+              {/* Inner Content that appears as it expands */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 opacity-0 pointer-events-none" id="hero-inner-content">
+                <p className="text-white/80 text-xl max-w-2xl font-medium leading-relaxed mb-8">
+                  AetherGrid transforms your living space into a high-performance energy ecosystem, blending aesthetic intelligence with decentralized solar mastery.
                 </p>
-<div className="flex flex-col sm:flex-row gap-6 justify-center">
-<button onClick={onLaunch} className="px-12 py-5 bg-primary text-on-primary font-headline font-bold uppercase tracking-widest text-sm rounded-lg hover:shadow-[0_0_30px_rgba(109,221,255,0.4)] transition-all">
-                        Launch Dashboard
-                    </button>
-<button className="px-12 py-5 border border-primary/20 text-primary font-headline font-bold uppercase tracking-widest text-sm rounded-lg hover:bg-primary/5 transition-all">
-                        Contact Solutions
-                    </button>
-</div>
-<div className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-8 opacity-40">
-<div className="font-headline text-[10px] uppercase tracking-[0.3em]">SECURE ACCESS</div>
-<div className="font-headline text-[10px] uppercase tracking-[0.3em]">AES-256 SYNC</div>
-<div className="font-headline text-[10px] uppercase tracking-[0.3em]">REAL-TIME SYNC</div>
-<div className="font-headline text-[10px] uppercase tracking-[0.3em]">GLOBAL READY</div>
-</div>
-</div>
-</section>
-{/*  Footer  */}
-<footer className="bg-[#080e1a] w-full py-12 px-8 border-t border-cyan-900/20">
-<div className="flex flex-col md:flex-row justify-between items-center gap-4 w-full max-w-screen-2xl mx-auto">
-<div className="text-lg font-black text-slate-300 font-headline">GridMind</div>
-<div className="font-body text-sm text-slate-500">© 2024 GridMind. All systems autonomous.</div>
-<div className="flex gap-8">
-<a className="font-body text-sm text-slate-600 hover:text-cyan-400 transition-colors" href="#">Privacy</a>
-<a className="font-body text-sm text-slate-600 hover:text-cyan-400 transition-colors" href="#">Terms</a>
-<a className="font-body text-sm text-slate-600 hover:text-cyan-400 transition-colors" href="#">System Health</a>
-</div>
-</div>
-</footer>
-</main>
-</div>
+                <div className="flex gap-4">
+                  <button onClick={onLaunch} className="bg-[#006d36] text-white px-10 py-4 rounded-full font-bold text-lg hover:shadow-xl transition-all">Launch Simulation</button>
+                  <button className="bg-white/20 backdrop-blur-md text-white border border-white/30 px-10 py-4 rounded-full font-bold text-lg hover:bg-white/30 transition-all">Explore Tech</button>
+                </div>
+              </div>
+            </div>
+            {/* Title that splits */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full flex justify-center items-center z-20 pointer-events-none overflow-hidden">
+              <div className="flex items-center gap-4 text-6xl md:text-[10rem] font-extrabold tracking-tighter whitespace-nowrap">
+                <span className="text-[#191c1e]" id="hero-title-left">THE ENERGY</span>
+                <span className="text-gradient-primary" id="hero-title-right">CURATOR.</span>
+              </div>
+            </div>
+            {/* Scroll Indicator */}
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center text-[#3d4a3e] gap-2 animate-bounce">
+              <span className="text-xs font-bold uppercase tracking-widest">Scroll to Begin</span>
+              <span className="material-symbols-outlined">expand_more</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Content sections that scroll OVER the expanded hero */}
+        <div className="content-over-hero relative z-10 -mt-[100vh]">
+
+          {/* Stage 2: Systemic Vulnerability */}
+          <section className="reveal-section py-32 px-8 bg-[#f2f4f6] relative z-40" id="vulnerability-section">
+            <div className="max-w-7xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-24 items-center">
+                <div className="order-2 md:order-1">
+                  <div className="relative rounded-lg overflow-hidden bg-zinc-900 aspect-square flex items-center justify-center p-12 shadow-2xl">
+                    <div className="absolute inset-0 opacity-40">
+                      <img className="w-full h-full object-cover grayscale" alt="Aerial drone view of a dark sprawling city during a massive blackout" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXz1fUdfT887T97S9wUjXos0Id6bOV7Yo1zqR0TMrXXi26dawF-C5GSCfZTXS4yKw0Mjkof6nmp1GesT70VxjOGeLzkjsBZB4TYtnHt40KN1Ug0-QuGp-kX6TjoQ7EdQxBdfl2H2KfxJv3ZM1DiLuQfZoRoBN_nmk5tfYMRN5rEnR__9ZoJjRzvjH6VXPukHQYXsa797gi6W4FhtajRlc2N7KtyIbSriqGvT1I9Kxu_gYmZ_xtay8GcIQnInsuwYmUzs6AOHXA0zK7" />
+                    </div>
+                    <div className="z-10 text-center">
+                      <span className="material-symbols-outlined text-[#ba1a1a] text-7xl mb-6">broken_image</span>
+                      <h3 className="text-white text-3xl font-bold mb-4">Systemic Vulnerability</h3>
+                      <p className="text-zinc-400">Traditional grids are built on fragile, centralized nodes—one failure cascades into total darkness.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="order-1 md:order-2">
+                  <span className="text-[#ba1a1a] font-bold tracking-widest text-xs uppercase mb-4 block">The Problem</span>
+                  <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-8">The invisible <br /> fragility of legacy.</h2>
+                  <p className="text-lg text-[#3d4a3e] mb-12">Yesterday&apos;s grid was designed for a different century. It&apos;s rigid, opaque, and increasingly unable to handle the volatility of the modern climate and the surge of renewable peaks.</p>
+                  <div className="space-y-8">
+                    <div className="flex gap-6 items-start">
+                      <div className="bg-[#ffdad6] p-4 rounded-full">
+                        <span className="material-symbols-outlined text-[#ba1a1a]">priority_high</span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-xl mb-1">Single Point of Failure</h4>
+                        <p className="text-[#3d4a3e]">Central power plants leave communities exposed to weather-related outages.</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-6 items-start">
+                      <div className="bg-[#ffdad6] p-4 rounded-full">
+                        <span className="material-symbols-outlined text-[#ba1a1a]">trending_down</span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-xl mb-1">Efficiency Loss</h4>
+                        <p className="text-[#3d4a3e]">Up to 15% of energy is lost during transmission before it reaches your home.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Stage 3: Distributed Harmony */}
+          <section className="reveal-section py-24 px-8 text-center bg-white relative z-40">
+            <div className="max-w-4xl mx-auto">
+              <span className="text-[#006d36] font-bold tracking-widest text-xs uppercase mb-6 block">The Paradigm Shift</span>
+              <h2 className="text-4xl md:text-6xl font-extrabold tracking-tighter mb-12">From central command to <span className="text-gradient-primary">distributed harmony.</span></h2>
+              <div className="relative h-px w-full bg-gradient-to-r from-transparent via-[#bccabb]/30 to-transparent my-16">
+                <div className="absolute left-1/2 -translate-x-1/2 -top-4 bg-white px-4">
+                  <span className="material-symbols-outlined text-[#006d36] text-4xl">swap_horiz</span>
+                </div>
+              </div>
+              <p className="text-xl text-[#3d4a3e] italic font-medium">&quot;We are not just changing how we power our homes; we are changing how our homes empower the world.&quot;</p>
+            </div>
+          </section>
+
+          {/* Solution Reveal */}
+          <section className="reveal-section py-32 px-8 overflow-hidden bg-[#f2f4f6] relative z-40">
+            <div className="max-w-7xl mx-auto">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div>
+                  <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-8">Autonomous <br /> Energy Resilience.</h2>
+                  <p className="text-lg text-[#3d4a3e] mb-12">Your home becomes its own utility. AetherGrid microgrids store solar yield locally and share surpluses with the neighborhood—creating a self-healing, living network.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="bg-white p-8 rounded-full shadow-sm border border-[#bccabb]/10 text-center">
+                      <span className="material-symbols-outlined text-[#006d36] text-3xl mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>solar_power</span>
+                      <h4 className="font-bold text-lg mb-2">Solar Harvesting</h4>
+                      <p className="text-sm text-[#3d4a3e]">Intelligent tracking optimizes every ray of light.</p>
+                    </div>
+                    <div className="bg-white p-8 rounded-full shadow-sm border border-[#bccabb]/10 text-center">
+                      <span className="material-symbols-outlined text-[#00668a] text-3xl mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>battery_charging_full</span>
+                      <h4 className="font-bold text-lg mb-2">Smart Storage</h4>
+                      <p className="text-sm text-[#3d4a3e]">Solid-state reserves for 24/7 reliability.</p>
+                    </div>
+                    <div className="bg-white p-8 rounded-full shadow-sm border border-[#bccabb]/10 text-center">
+                      <span className="material-symbols-outlined text-[#006d36] text-3xl mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>hub</span>
+                      <h4 className="font-bold text-lg mb-2">Grid Sharing</h4>
+                      <p className="text-sm text-[#3d4a3e]">Monetize your excess energy automatically.</p>
+                    </div>
+                    <div className="bg-white p-8 rounded-full shadow-sm border border-[#bccabb]/10 text-center">
+                      <span className="material-symbols-outlined text-[#00668a] text-3xl mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
+                      <h4 className="font-bold text-lg mb-2">Total Autonomy</h4>
+                      <p className="text-sm text-[#3d4a3e]">Seamless island-mode during grid outages.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="relative">
+                  <div className="aspect-square rounded-full border-2 border-dashed border-[#006d36]/20 absolute -inset-10 animate-[spin_20s_linear_infinite]"></div>
+                  <div className="relative z-10 rounded-full overflow-hidden shadow-2xl">
+                    <img className="w-full h-full object-cover" alt="Conceptual visualization of a futuristic city at sunset" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsqcRS5WifMRpACcqsHIFleApuVmLmVev3EmtooKA0_00t58lXjCwStZZ07mIHfGAsD9DFMCCd3dnkfLtYbQQNZ1pRCwjL-frQOuPo5nhhfgtgPvyqC_azs-FwWdyTV6hpkkPAko4c4G5_IKegggDbWIUPRMSsph8S_sB7M5tiqhwQ9fpOcpj-Ja1w5Y-IXobCJ3YVZxQDBk9DxrnfsAZAqfP_GI4S4Yiek68hH2yczdve_Hlhc1llFTycuVMwgyL4M2a2qE-1fDQf" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* AI Layer */}
+          <section className="reveal-section py-32 px-8 bg-[#191c1e] text-white relative overflow-hidden z-40">
+            <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[#006d36]/20 to-transparent"></div>
+            <div className="max-w-7xl mx-auto relative z-10">
+              <div className="max-w-2xl mb-20">
+                <span className="text-[#4ade80] font-bold tracking-widest text-xs uppercase mb-6 block">Intelligence Layer</span>
+                <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-8">The Mind inside <br /> the Machine.</h2>
+                <p className="text-xl text-zinc-400">AetherGrid&apos;s AI doesn&apos;t just monitor—it predicts. Weather patterns, consumption habits, and grid pricing are processed in real-time to maximize impact.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="bg-zinc-900/50 backdrop-blur-xl p-10 rounded-3xl border border-zinc-800">
+                  <div className="text-5xl font-light text-[#4ade80] mb-6">98%</div>
+                  <h4 className="text-xl font-bold mb-4">Predictive Accuracy</h4>
+                  <p className="text-zinc-500">Neural networks forecast demand based on behavioral signals and historical climate data.</p>
+                </div>
+                <div className="bg-zinc-900/50 backdrop-blur-xl p-10 rounded-3xl border border-zinc-800">
+                  <div className="text-5xl font-light text-[#7bd0ff] mb-6">0ms</div>
+                  <h4 className="text-xl font-bold mb-4">Transfer Latency</h4>
+                  <p className="text-zinc-500">Switching from grid to solar is instantaneous. Your electronics will never notice the transition.</p>
+                </div>
+                <div className="bg-zinc-900/50 backdrop-blur-xl p-10 rounded-3xl border border-zinc-800">
+                  <div className="text-5xl font-light text-[#4ade80] mb-6">40%</div>
+                  <h4 className="text-xl font-bold mb-4">Avg. Efficiency Gain</h4>
+                  <p className="text-zinc-500">Machine learning optimizes battery discharge cycles to extend hardware life.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Final CTA */}
+          <section className="reveal-section py-40 px-8 bg-white relative z-40">
+            <div className="max-w-5xl mx-auto text-center">
+              <div className="mb-12 inline-block">
+                <span className="material-symbols-outlined text-[#006d36] text-7xl mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+              </div>
+              <h2 className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-10 leading-tight">Ready to curate your <br /> <span className="text-gradient-primary">energy future?</span></h2>
+              <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                <button onClick={onLaunch} className="bg-[#006d36] text-white px-12 py-5 rounded-full font-bold text-xl shadow-2xl hover:scale-105 transition-transform">Get Started Today</button>
+                <button className="bg-[#f2f4f6] text-[#191c1e] px-12 py-5 rounded-full font-bold text-xl hover:bg-[#e6e8ea] transition-colors">Request Consultation</button>
+              </div>
+              <p className="mt-12 text-[#3d4a3e]">Join 15,000+ homes powered by AetherGrid intelligence.</p>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer className="bg-zinc-50 py-16 px-8 border-t border-zinc-100/10 relative z-40">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div>
+            <div className="text-lg font-bold text-zinc-900 mb-4">AetherGrid</div>
+            <p className="text-sm leading-relaxed text-zinc-500 max-w-sm">
+              © 2024 AetherGrid. Redefining the digital curation of sustainable energy. Built for the modern architect.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-8 md:justify-end">
+            <a className="text-zinc-500 hover:text-emerald-500 transition-all duration-300 text-sm" href="#">Impact Report</a>
+            <a className="text-zinc-500 hover:text-emerald-500 transition-all duration-300 text-sm" href="#">Privacy Policy</a>
+            <a className="text-zinc-500 hover:text-emerald-500 transition-all duration-300 text-sm" href="#">Grid API</a>
+            <a className="text-zinc-500 hover:text-emerald-500 transition-all duration-300 text-sm" href="#">Contact Us</a>
+          </div>
+        </div>
+      </footer>
+
+    </div>
   );
 }
