@@ -88,8 +88,8 @@ export default function SimulationPage() {
     if (!nodes.length) return { text: 'Waiting for data...', action: 'INITIALIZING', confidence: 0 }
     const surplus = nodes.filter(n => n.prediction > 0).length
     const deficit = nodes.filter(n => n.prediction < 0).length
-    const modeled = nodes.filter(n => n.has_model).length
-    const conf = modeled ? Math.round((modeled / nodes.length) * 100) : 0
+    const avgConf = nodes.length ? nodes.reduce((sum, n) => sum + (n.confidence || 0), 0) / nodes.length : 0
+    const conf = Math.round(avgConf)
     if (surplus > deficit) return { text: 'High efficiency P2P matching detected.', action: 'BALANCED LOAD', confidence: conf }
     if (deficit > surplus) return { text: 'Deficit anticipated — preemptive bidding active.', action: 'DEMAND SURGE', confidence: conf }
     return { text: 'Network equilibrium maintained.', action: 'STABLE GRID', confidence: conf }
@@ -136,7 +136,7 @@ export default function SimulationPage() {
                 {snapshot?.paused ? 'play_arrow' : 'pause'}
               </span>
             </button>
-            {[1, 2, 5].map(spd => (
+            {[0.25, 0.5, 1, 2, 5].map(spd => (
               <button
                 key={spd}
                 className={`sim-speed-btn ${currentSpeed === spd ? 'active' : ''}`}
@@ -459,7 +459,7 @@ export default function SimulationPage() {
                   </span>
                   <span className="sim-ml-conf">
                     {selectedData
-                      ? (selectedData.has_model ? `${selectedData.train_count} trains` : 'No model')
+                      ? (selectedData.has_model ? `${Math.round(selectedData.confidence)}% Confidence` : 'No model')
                       : `${networkPrediction.confidence}% Confidence`}
                   </span>
                 </div>

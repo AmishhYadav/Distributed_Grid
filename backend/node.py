@@ -48,6 +48,7 @@ class Node:
         # ── ML components (Phase 2) ──────────────────────────────────
         self.model: RandomForestRegressor | None = None
         self.latest_prediction = 0.0   # predicted net energy for next tick
+        self.latest_confidence = 0.0   # ML prediction confidence %
         self.train_count = 0           # how many times the model has been trained
 
         # ── P2P / resilience stats (Phase 2) ─────────────────────────
@@ -107,6 +108,7 @@ class Node:
             "soc": round(self.charge / self.battery_capacity * 100, 1),
             "actual_delta": round(actual_delta, 4),
             "prediction": round(self.latest_prediction, 4),
+            "confidence": self.latest_confidence,
             "blackouts": self.blackout_ticks,
             "train_count": self.train_count,
             "has_model": self.model is not None,
@@ -223,9 +225,22 @@ class Node:
     def predict(self, hour: float, solar_norm: float, demand_norm: float) -> float:
         """Predict net energy for the next tick. Returns 0.0 if untrained."""
         if self.model is None:
+            self.latest_confidence = 0.0
             return 0.0
+            
         features = np.array([[hour, solar_norm * self.solar_panel_rating,
                                demand_norm * self.base_demand_kw]])
+                               
+        # Calculate standard deviation (disagreement) across all trees in the forest
+        tree_preds = [tree.predict(features)[0] for tree in self.model.estimators_]
+        std_dev = np.std(tree_preds)
+        
+        # Normalize the standard deviation to a 0-100 scale.
+        # A variance of 0 means perfect agreement (100% confidence).
+        # We clamp lower bound so massive std dev equals 0% conf.
+        conf = max(0.0, min(100.0, 100.0 - (std_dev * 100.0)))
+        self.latest_confidence = round(conf, 1)
+        
         return float(self.model.predict(features)[0])
 
     # ── P2P Charge Adjustment ────────────────────────────────────────
