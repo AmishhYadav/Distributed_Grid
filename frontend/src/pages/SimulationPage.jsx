@@ -61,6 +61,7 @@ export default function SimulationPage() {
   const { snapshot, connected, transactions, pause, resume, setSpeed, cloudShock } = useSimulation()
   const [selectedNode, setSelectedNode] = useState(null)
   const [currentSpeed, setCurrentSpeed] = useState(1)
+  const [logFilter, setLogFilter] = useState('ALL')
 
   const nodes = snapshot?.nodes || []
   const selectedData = selectedNode !== null ? nodes[selectedNode] : null
@@ -169,16 +170,39 @@ export default function SimulationPage() {
               <h3 className="sim-log-title">Transfer Log</h3>
               <p className="sim-log-subtitle">Real-time ledger updates</p>
             </div>
+            <div style={{ display: 'flex', gap: '4px', marginTop: '12px', background: 'var(--surface-container-highest)', padding: '4px', borderRadius: '8px' }}>
+              <button 
+                onClick={() => setLogFilter('ALL')} 
+                style={{ flex: 1, padding: '4px', fontSize: '11px', fontWeight: 600, borderRadius: '4px', border: 'none', background: logFilter === 'ALL' ? 'var(--primary)' : 'transparent', color: logFilter === 'ALL' ? 'var(--on-primary)' : 'var(--on-surface-variant)', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}
+              >All Setup</button>
+              <button 
+                onClick={() => setLogFilter('P2P')} 
+                style={{ flex: 1, padding: '4px', fontSize: '11px', fontWeight: 600, borderRadius: '4px', border: 'none', background: logFilter === 'P2P' ? 'var(--primary)' : 'transparent', color: logFilter === 'P2P' ? 'var(--on-primary)' : 'var(--on-surface-variant)', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}
+              >P2P Tx</button>
+              <button 
+                onClick={() => setLogFilter('PREDICTIVE')} 
+                style={{ flex: 1, padding: '4px', fontSize: '11px', fontWeight: 600, borderRadius: '4px', border: 'none', background: logFilter === 'PREDICTIVE' ? 'var(--primary)' : 'transparent', color: logFilter === 'PREDICTIVE' ? 'var(--on-primary)' : 'var(--on-surface-variant)', cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}
+              >Bids & Models</button>
+            </div>
           </div>
 
           <div className="sim-log-list">
-            {transactions.length === 0 && (
+            {transactions.filter(tx => {
+              if (logFilter === 'P2P') return tx.type !== 'bid' && tx.type !== 'offer';
+              if (logFilter === 'PREDICTIVE') return tx.type === 'bid' || tx.type === 'offer' || tx.type === 'ml_train';
+              return true;
+            }).length === 0 && (
               <div className="sim-log-empty">
                 <span className="material-symbols-outlined sim-log-empty-icon">electric_bolt</span>
                 <span>Waiting for transfers...</span>
               </div>
             )}
-            {transactions.map((tx, i) => (
+            
+            {transactions.filter(tx => {
+              if (logFilter === 'P2P') return tx.type !== 'bid' && tx.type !== 'offer';
+              if (logFilter === 'PREDICTIVE') return tx.type === 'bid' || tx.type === 'offer' || tx.type === 'ml_train';
+              return true;
+            }).map((tx, i) => (
               <div key={i} className="sim-tx-card">
                 <div className="sim-tx-top">
                   <span className="sim-tx-id">#{String(tx.tick || i).padStart(5, '0')}</span>
