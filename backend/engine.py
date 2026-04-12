@@ -26,8 +26,8 @@ from router import P2PRouter
 
 
 # P2P thresholds (State of Charge %)
-_BID_SOC_THRESHOLD = 30.0    # nodes below this % request energy
-_OFFER_SOC_THRESHOLD = 70.0  # nodes above this % offer energy
+_BID_SOC_THRESHOLD = 40.0    # nodes below this % request energy
+_OFFER_SOC_THRESHOLD = 60.0  # nodes above this % offer energy
 _ML_TRAIN_INTERVAL = 24      # ticks between retraining (1 logical day)
 
 
@@ -67,6 +67,15 @@ class Engine:
             self.nodes.append(node)
             self.node_map[i] = node
 
+        # Initialize the synthethic database and pre-train nodes
+        try:
+            import database
+            database.initialize_database("history.db", days=30)
+            for node in self.nodes:
+                node.load_history_from_db("history.db")
+        except Exception as e:
+            print(f"Warning: Failed to initialize/load database: {e}")
+
     # ── Tick ──────────────────────────────────────────────────────────
     def step(self) -> dict:
         """Advance the simulation by one logical time step."""
@@ -92,17 +101,36 @@ class Engine:
         # ── P2P Negotiation Phase ────────────────────────────────────
         bids = {}
         offers = {}
+        transactions = []
         for node in self.nodes:
-            if node.soc < _BID_SOC_THRESHOLD:
-                need = (0.30 * node.battery_capacity) - node.charge
+            # Phase 2 Impact: Preemptively bid/offer based on predicted net energy
+            predicted_net = node.latest_prediction if node.model is not None else 0.0
+            anticipated_charge = node.charge + predicted_net
+            anticipated_soc = (anticipated_charge / node.battery_capacity) * 100.0
+
+            if anticipated_soc < _BID_SOC_THRESHOLD:
+                need = (0.30 * node.battery_capacity) - anticipated_charge
                 if need > 0:
                     bids[node.id] = need
-            elif node.soc > _OFFER_SOC_THRESHOLD:
-                excess = node.charge - (0.70 * node.battery_capacity)
+                    transactions.append({
+                        "type": "bid",
+                        "nodeId": node.id,
+                        "kWh": need,
+                        "reason": f"Predicted SoC {anticipated_soc:.0f}% < 30%"
+                    })
+            elif anticipated_soc > _OFFER_SOC_THRESHOLD:
+                excess = anticipated_charge - (0.70 * node.battery_capacity)
                 if excess > 0:
                     offers[node.id] = excess
+                    transactions.append({
+                        "type": "offer",
+                        "nodeId": node.id,
+                        "kWh": excess,
+                        "reason": f"Predicted SoC {anticipated_soc:.0f}% > 70%"
+                    })
 
-        transactions = self.router.match(bids, offers, self.node_map, self.tick_count)
+        p2p_transactions = self.router.match(bids, offers, self.node_map, self.tick_count)
+        transactions.extend(p2p_transactions)
 
         # ── ML Training (every 24 ticks = 1 logical day) ─────────────
         ml_events = []

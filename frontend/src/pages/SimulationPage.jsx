@@ -182,19 +182,27 @@ export default function SimulationPage() {
               <div key={i} className="sim-tx-card">
                 <div className="sim-tx-top">
                   <span className="sim-tx-id">#{String(tx.tick || i).padStart(5, '0')}</span>
-                  <span className={`sim-tx-badge ${tx.type === 'ml_train' ? 'ml' : 'p2p'}`}>
-                    {tx.type === 'ml_train' ? 'ML TRAIN' : 'P2P'}
+                  <span className={`sim-tx-badge ${['bid', 'offer', 'ml_train'].includes(tx.type) ? tx.type : 'p2p'}`}>
+                    {tx.type === 'ml_train' ? 'ML TRAIN' : tx.type === 'bid' ? 'PRE-BID' : tx.type === 'offer' ? 'PRE-OFFER' : 'P2P'}
                   </span>
                 </div>
                 <div className="sim-tx-body">
                   <div className="sim-tx-nodes">
-                    <span className="sim-tx-node-name">
-                      {tx.type === 'ml_train' ? 'Grid Hub' : (HOUSE_NAMES[tx.from] || `Node ${tx.from}`)}
-                    </span>
-                    <span className="material-symbols-outlined sim-tx-arrow">south</span>
-                    <span className="sim-tx-node-name">
-                      {tx.type === 'ml_train' ? (HOUSE_NAMES[tx.nodeId] || `Node ${tx.nodeId}`) : (HOUSE_NAMES[tx.to] || `Node ${tx.to}`)}
-                    </span>
+                    {tx.type === 'bid' || tx.type === 'offer' ? (
+                      <span className="sim-tx-node-name" style={{ color: tx.type === 'bid' ? 'var(--sim-amber)' : 'var(--sim-emerald)' }}>
+                        {HOUSE_NAMES[tx.nodeId]} — {tx.reason}
+                      </span>
+                    ) : (
+                      <>
+                        <span className="sim-tx-node-name">
+                          {tx.type === 'ml_train' ? 'Grid Hub' : (HOUSE_NAMES[tx.from] || `Node ${tx.from}`)}
+                        </span>
+                        <span className="material-symbols-outlined sim-tx-arrow">south</span>
+                        <span className="sim-tx-node-name">
+                          {tx.type === 'ml_train' ? (HOUSE_NAMES[tx.nodeId] || `Node ${tx.nodeId}`) : (HOUSE_NAMES[tx.to] || `Node ${tx.to}`)}
+                        </span>
+                      </>
+                    )}
                   </div>
                   <div className="sim-tx-amount">
                     <span className={`sim-tx-kwh ${tx.type === 'ml_train' ? 'ml' : ''}`}>

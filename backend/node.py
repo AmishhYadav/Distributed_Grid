@@ -12,6 +12,8 @@ and P2P negotiation readiness.
 from __future__ import annotations
 from datetime import datetime
 
+import os
+import sqlite3
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 
@@ -116,6 +118,67 @@ class Node:
             self.history = self.history[-_MAX_HISTORY_TICKS:]
 
         return state
+
+    # ── Database Pre-training (Phase 2 enhancement) ──────────────────
+    def load_history_from_db(self, db_path: str = "history.db") -> bool:
+        """
+        Fetch synthetic history from the SQLite database and pre-train the model.
+        This provides instant robust predictions on startup without waiting days.
+        """
+        if not os.path.exists(db_path):
+            return False
+            
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # We need the last 168 hours (7 days) for a good training baseline
+        cursor.execute('''
+            SELECT time, hour, solar_norm, demand_norm 
+            FROM environment 
+            ORDER BY tick DESC 
+            LIMIT ?
+        ''', (_MAX_HISTORY_TICKS,))
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        if len(rows) < 30:
+            return False
+            
+        # Reverse to chronological order
+        rows.reverse()
+        
+        X = []
+        y = []
+        
+        for i in range(len(rows) - 1):
+            curr = rows[i]
+            nxt = rows[i+1]
+            
+            # curr: (time, hour, solar_norm, demand_norm)
+            hour = curr[1]
+            generation = curr[2] * self.solar_panel_rating
+            demand = curr[3] * self.base_demand_kw
+            
+            X.append([hour, generation, demand])
+            
+            # next tick's net energy
+            next_generation = nxt[2] * self.solar_panel_rating
+            next_demand = nxt[3] * self.base_demand_kw
+            next_net = next_generation - next_demand
+            y.append(next_net)
+            
+        X_arr = np.array(X)
+        y_arr = np.array(y)
+        
+        self.model = RandomForestRegressor(
+            n_estimators=50,
+            max_depth=8,
+            random_state=self.id,
+        )
+        self.model.fit(X_arr, y_arr)
+        self.train_count += 1
+        return True
 
     # ── ML Training ──────────────────────────────────────────────────
     def train_model(self) -> bool:

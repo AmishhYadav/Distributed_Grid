@@ -67,3 +67,4 @@ dashboard_stitch.html
 *.seed
 coverage/
 .cache/
+history.db
